@@ -4,14 +4,6 @@ A simple antivirus coded in python capable of scanning selected files and deleti
 If you would like to download the project there are 2 options: You can either simpily download the prject and run the .exe file and your done :)
 Alternativly you can download the code and compile it yourself. You will also need to dowload the .zip files and extract them to the same directory as the script to make it work :) 
 
-All Donations in Cryptocurrency are highly appreciated:  
-
-Bitcoin: bc1qgnvw4x7w4m7uhafdne7seu4fvs73m44v9fu3ng  
-
-Monero: 42xCsURykTQGqz6Kmy4rBm4ZVEpGv5NhcRFrqbgQZ3FzTXeFe9nzNjYCBzU7yMSGMqVzrHfNoMBfYfoALQcc69VtGNQeRWE  
-
-Dogecoin: DD3rtFFBfusJSDmP8cmVp3X5Jq688B49gs  
-
 Thank You! :)
 
 ![image](https://user-images.githubusercontent.com/79765504/110012476-3c13e500-7d29-11eb-9642-d41edc75aef0.png)
