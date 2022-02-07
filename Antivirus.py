@@ -28,7 +28,7 @@ def scan_sha256(file):
             label_status.configure(text="Status: File is safe!", width = 100, height = 4,  
                             fg = "green")
       else:
-            print("Virus detected! File quarentined")
+            print("Virus detected! File quarantined")
             label_status.configure(text="Status: Virus detected! File Deleted!", width = 100, height = 4,  
                             fg = "red")
             os.remove(file)
@@ -156,7 +156,4 @@ label_status.place(x=-150, y=300)
 button_explore.grid(column = 1, row = 2)
 button_explore.place(x=205, y=400)
 
-window.mainloop() 
-
-
-
+window.mainloop()
