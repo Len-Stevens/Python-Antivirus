@@ -4,7 +4,10 @@ A simple antivirus coded in python capable of scanning selected files and deleti
 Thank You! :)
 
 ## Ui main Tab
-![Screenshot 2022-05-07 232627](https://user-images.githubusercontent.com/81589649/167272203-821e9ea5-459e-472a-ae56-feab1eb67a7e.png)
+![Main_ui](https://user-images.githubusercontent.com/81589649/167272203-821e9ea5-459e-472a-ae56-feab1eb67a7e.png)
+
+## Example file scanned
+![File_scanned](https://user-images.githubusercontent.com/81589649/167272476-ce908ac7-43d0-41c9-bff2-2ad1ca25420d.png)
 
 ## Donate Crypto
 **[BTC];**``󠀠bc1qz5q86hrj4n983vxey3mxrrd7227ueacdfz56c9``  
