@@ -1,10 +1,13 @@
 # imports
 from email import header
+from http.client import REQUESTED_RANGE_NOT_SATISFIABLE
 from pstats import Stats
 from PyQt5 import QtCore, QtGui, QtWidgets
+from virustotal_python import Virustotal
 from tkinter import filedialog
 from tkinter import messagebox
 from tkinter import *
+import configparser
 import webbrowser
 import requests
 import hashlib
@@ -13,13 +16,16 @@ import sys
 import os
 from tkinter import *
 
-from virustotal_python import Virustotal
-import os.path
-from pprint import pprint
-
 
 # get current directory
 current_dir = os.path.dirname(__file__)
+
+# settings.ini file path
+settings_file_path = current_dir + '/settings/settings.ini'
+
+# define config
+config = configparser.ConfigParser()
+config.read(settings_file_path)
 
 # get files with Virus hashes inside
 SHA256_HASHES = (current_dir + '\\hard_signatures\\SHA256-Hashes.txt')
@@ -27,7 +33,7 @@ MD5_HASHES    = (current_dir + '\\hard_signatures\\MD5-Hashes.txt')
 SHA1_HASHES   = (current_dir + '\\hard_signatures\\SHA1-HASHES.json')
 
 # define Stuff
-VERSION = "2.1"
+VERSION = "2.2"
 DEV     = "cookie0_o, Len-Stevens"
 
 # url´s
@@ -35,6 +41,21 @@ Report_issues = "https://github.com/cookie0o/Python-Antivirus-beta-ui/issues/new
 Submit_sample = "https://github.com/cookie0o/Python-Antivirus-beta-ui/discussions/1"
 virus_total_api = "https://www.virustotal.com/api/v3/files/report"
 
+# save settings to settings/settings.ini
+def SaveSettings(self):
+    # get api key
+    api_key = self.VirusTotalApiKey.text()
+    # get VirusTotal scan checkbox status
+    virus_total_scan = self.checkBox.isChecked()
+    self.VirusTotalApiKey.setText(api_key)
+
+    config['-settings-']['VirusTotalScan'] = str(virus_total_scan)
+    config['-settings-']['VirusTotalApiKey'] = str(api_key)
+
+    with open(settings_file_path, 'w') as configfile:    # save
+        config.write(configfile)
+
+    
 # remove file
 def removeFile(file):
     # define thinker root again AGAIN since it was destroyed 3 times now xD
@@ -160,7 +181,7 @@ def scan(file, self, MainWindow):
         # check if Virus total api is checked and file is under 32mb then scan the file with Virus total
         if self.VirusTotalApicheckBox.isChecked() and os.path.getsize(file) < 32000000:
             # get api key
-            api_key = self.lineEdit.text()
+            api_key = self.VirusTotalApiKey.text()
             # check if api key is empty if yes then show error
             if api_key == "":
                 # define thinker root again (this is getting old) since it was destroyed
@@ -363,37 +384,55 @@ class Ui_MainWindow(object):
         self.SettingsTitle.setAlignment(QtCore.Qt.AlignCenter)
         self.SettingsTitle.setObjectName("SettingsTitle")
         self.textBrowser = QtWidgets.QTextBrowser(self.SettingsTab)
-        self.textBrowser.setGeometry(QtCore.QRect(0, 277, 261, 31))
+        self.textBrowser.setGeometry(QtCore.QRect(0, 275, 261, 41))
         self.textBrowser.setFrameShape(QtWidgets.QFrame.NoFrame)
         self.textBrowser.setOpenExternalLinks(True)
         self.textBrowser.setObjectName("textBrowser")
-        self.VirusTotalApicheckBox = QtWidgets.QCheckBox(self.SettingsTab)
-        self.VirusTotalApicheckBox.setGeometry(QtCore.QRect(5, 45, 456, 17))
+        self.checkBox = QtWidgets.QCheckBox(self.SettingsTab)
+        self.checkBox.setGeometry(QtCore.QRect(5, 45, 600, 17))
         font = QtGui.QFont()
         font.setPointSize(10)
-        self.VirusTotalApicheckBox.setFont(font)
-        self.VirusTotalApicheckBox.setStyleSheet("QCheckBox::indicator {\n"
+        self.checkBox.setFont(font)
+        self.checkBox.setStyleSheet("QCheckBox::indicator {\n"
 "    background-color: rgb(65, 65, 65);\n"
 "}\n"
 "\n"
 "QCheckBox::indicator:checked {\n"
 "    image: url(:/res/Settings/check.svg);\n"
 "}")
-        self.VirusTotalApicheckBox.setObjectName("VirusTotalApicheckBox")
-        self.lineEdit = QtWidgets.QLineEdit(self.SettingsTab)
-        self.lineEdit.setGeometry(QtCore.QRect(5, 65, 391, 20))
-        self.lineEdit.setStyleSheet("background-color: rgb(65, 65, 65);\n"
+        self.checkBox.setObjectName("checkBox")
+        self.VirusTotalApiKey = QtWidgets.QLineEdit(self.SettingsTab)
+        self.VirusTotalApiKey.setGeometry(QtCore.QRect(5, 65, 391, 20))
+        self.VirusTotalApiKey.setStyleSheet("background-color: rgb(65, 65, 65);\n"
 "\n"
 "border-width: 2px;\n"
 "border-radius: 10px;\n"
 "border-color: beige;")
-        self.lineEdit.setInputMask("")
-        self.lineEdit.setText("")
-        self.lineEdit.setMaxLength(32767)
-        self.lineEdit.setFrame(True)
-        self.lineEdit.setEchoMode(QtWidgets.QLineEdit.Password)
-        self.lineEdit.setAlignment(QtCore.Qt.AlignCenter)
-        self.lineEdit.setObjectName("lineEdit")
+        self.VirusTotalApiKey.setInputMask("")
+        self.VirusTotalApiKey.setText("")
+        self.VirusTotalApiKey.setMaxLength(32767)
+        self.VirusTotalApiKey.setFrame(True)
+        self.VirusTotalApiKey.setEchoMode(QtWidgets.QLineEdit.Password)
+        self.VirusTotalApiKey.setAlignment(QtCore.Qt.AlignCenter)
+        self.VirusTotalApiKey.setObjectName("VirusTotalApiKey")
+        self.SaveSettingsButton = QtWidgets.QPushButton(self.SettingsTab)
+        self.SaveSettingsButton.setGeometry(QtCore.QRect(415, 265, 121, 31))
+        font = QtGui.QFont()
+        font.setPointSize(16)
+        self.SaveSettingsButton.setFont(font)
+        self.SaveSettingsButton.setFlat(True)
+        self.SaveSettingsButton.setObjectName("SaveSettingsButton")
+        self.Background_5 = QtWidgets.QLabel(self.SettingsTab)
+        self.Background_5.setGeometry(QtCore.QRect(415, 265, 121, 31))
+        self.Background_5.setStyleSheet("background-color: rgb(74, 74, 74);")
+        self.Background_5.setText("")
+        self.Background_5.setObjectName("Background_5")
+        self.Background_5.raise_()
+        self.SettingsTitle.raise_()
+        self.textBrowser.raise_()
+        self.checkBox.raise_()
+        self.VirusTotalApiKey.raise_()
+        self.SaveSettingsButton.raise_()
         self.Tabs.addWidget(self.SettingsTab)
         self.VirusScanResults_hidden = QtWidgets.QWidget()
         self.VirusScanResults_hidden.setObjectName("VirusScanResults_hidden")
@@ -517,6 +556,21 @@ class Ui_MainWindow(object):
         self.line.raise_()
         self.VirusTotalWidget.raise_()
         self.Tabs.addWidget(self.VirusScanResults_hidden)
+        self.LoadingPage = QtWidgets.QWidget()
+        self.LoadingPage.setObjectName("LoadingPage")
+        self.LoadingPageTitle = QtWidgets.QLabel(self.LoadingPage)
+        self.LoadingPageTitle.setGeometry(QtCore.QRect(0, 0, 541, 41))
+        font = QtGui.QFont()
+        font.setPointSize(23)
+        self.LoadingPageTitle.setFont(font)
+        self.LoadingPageTitle.setStyleSheet("background-color: rgb(74, 74, 74);")
+        self.LoadingPageTitle.setAlignment(QtCore.Qt.AlignCenter)
+        self.LoadingPageTitle.setObjectName("LoadingPageTitle")
+        self.loading_video_lable = QtWidgets.QLabel(self.LoadingPage)
+        self.loading_video_lable.setGeometry(QtCore.QRect(5, 45, 531, 251))
+        self.loading_video_lable.setText("")
+        self.loading_video_lable.setObjectName("loading_video_lable")
+        self.Tabs.addWidget(self.LoadingPage)
         self.version_display = QtWidgets.QLabel(MainWindow)
         self.version_display.setGeometry(QtCore.QRect(1, 284, 47, 20))
         self.version_display.setStyleSheet("background-color: qradialgradient(spread:pad, cx:0.5, cy:0.5, radius:0.5, fx:0.1468, fy:0.1468, stop:1 rgba(0, 0, 0, 0));")
@@ -530,6 +584,16 @@ class Ui_MainWindow(object):
         self.retranslateUi(MainWindow)
         QtCore.QMetaObject.connectSlotsByName(MainWindow)
 
+        # read settings from ini file
+        VirustotalScan = config.get('-settings-', 'VirusTotalScan')
+        api_key = config.get('-settings-', 'VirusTotalApiKey')
+        if VirustotalScan == 'True':
+            self.checkBox.setChecked(True)
+        else:
+            self.checkBox.setChecked(False)
+        self.VirusTotalApiKey.setText(api_key)
+        
+
         # change tabs buttons
         self.HomeTabButton.clicked.connect(lambda: self.Tabs.setCurrentIndex(0))
         self.SettingsTabButton.clicked.connect(lambda: self.Tabs.setCurrentIndex(1))
@@ -540,21 +604,25 @@ class Ui_MainWindow(object):
         # open file dialog and scan file
         self.SelectFileButton.clicked.connect(lambda: browseFiles(MainWindow, self))
 
+        # save settings button
+        self.SaveSettingsButton.clicked.connect(lambda: SaveSettings(self))
+
 
     def retranslateUi(self, MainWindow):
         _translate = QtCore.QCoreApplication.translate
         MainWindow.setWindowTitle(_translate("MainWindow", f"-AntiVirus- [v{VERSION}] [dev; {DEV}]"))
-        self.HomeTitle.setText(_translate("MainWindow", "Home Tab"))
+        self.HomeTitle.setText(_translate("MainWindow", "Home"))
         self.SelectFileButton.setText(_translate("MainWindow", "Scan File"))
         self.ReportIssueButton.setText(_translate("MainWindow", "report issue"))
-        self.SettingsTitle.setText(_translate("MainWindow", "Settings Tab"))
+        self.SettingsTitle.setText(_translate("MainWindow", "Settings"))
         self.textBrowser.setHtml(_translate("MainWindow", "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.0//EN\" \"http://www.w3.org/TR/REC-html40/strict.dtd\">\n"
 "<html><head><meta name=\"qrichtext\" content=\"1\" /><style type=\"text/css\">\n"
 "p, li { white-space: pre-wrap; }\n"
 "</style></head><body style=\" font-family:\'MS Shell Dlg 2\'; font-size:8.25pt; font-weight:400; font-style:normal;\">\n"
 "<p style=\" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\"><a href=\"https://github.com/cookie0o/Python-Antivirus-beta-ui/discussions/1\"><span style=\" font-size:10pt; font-weight:600; text-decoration: underline; color:#000000;\">Report Virus Hashes</span></a><a href=\"https://github.com/cookie0o/Python-Antivirus-beta-ui/discussions/1\"><span style=\" font-size:10pt; text-decoration: underline; color:#0000ff;\"> here!</span></a></p></body></html>"))
-        self.VirusTotalApicheckBox.setText(_translate("MainWindow", "Use Virus Total api (only files under 32MB) (files will be uploaded publicly)")) 
-        self.lineEdit.setPlaceholderText(_translate("MainWindow", "Enter your Virus Total api Key here"))
+        self.checkBox.setText(_translate("MainWindow", "Use Virus Total api (only files under 32MB) (files will be uploaded publicly)"))
+        self.VirusTotalApiKey.setPlaceholderText(_translate("MainWindow", "Enter your Virus Total api Key here"))
+        self.SaveSettingsButton.setText(_translate("MainWindow", "Safe config"))
         self.VirusResultsTitle.setText(_translate("MainWindow", "Virus Scan Results"))
         self.FileName.setText(_translate("MainWindow", "File Name: "))
         self.FilePath.setText(_translate("MainWindow", "File Path: "))
@@ -567,6 +635,7 @@ class Ui_MainWindow(object):
         self.DetectionsText.setText(_translate("MainWindow", "0 | 0"))
         self.label_4.setText(_translate("MainWindow", "Virus Total score"))
         self.label_5.setText(_translate("MainWindow", "Detections"))
+        self.LoadingPageTitle.setText(_translate("MainWindow", "Loading screen"))
         self.version_display.setText(_translate("MainWindow", f"v{VERSION}"))
 # import resources
 import res.res_rc
