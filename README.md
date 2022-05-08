@@ -10,7 +10,7 @@ Thank You! :)
 ![scanned](https://user-images.githubusercontent.com/81589649/167302813-f4a72402-0e6b-4d32-a73d-f87bf63bbbfa.png)
 
 ## Settings tab
-![settings_tab](https://user-images.githubusercontent.com/81589649/167302823-867a7f1f-b05f-46cc-a8a1-e4c9ca9a434e.png)
+![Settings_Tab](https://user-images.githubusercontent.com/81589649/167316096-f0b9ef27-1f74-4a53-93f6-2d4901cdaa24.png)
 
 ## Donate Crypto
 **[BTC];**``󠀠bc1qz5q86hrj4n983vxey3mxrrd7227ueacdfz56c9``  
