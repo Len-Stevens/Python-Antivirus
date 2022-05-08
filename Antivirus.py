@@ -196,6 +196,13 @@ def browseFiles(MainWindow, self):
 # UI (made with pyqt5)
 class Ui_MainWindow(object):
     def setupUi(self, MainWindow):
+        # Handle high resolution displays:
+        if hasattr(QtCore.Qt, 'AA_EnableHighDpiScaling'):
+            QtWidgets.QApplication.setAttribute(QtCore.Qt.AA_EnableHighDpiScaling, True)
+        if hasattr(QtCore.Qt, 'AA_UseHighDpiPixmaps'):
+            QtWidgets.QApplication.setAttribute(QtCore.Qt.AA_UseHighDpiPixmaps, True)
+        
+        # create Window
         MainWindow.setObjectName("MainWindow")
         MainWindow.resize(590, 300)
         MainWindow.setMinimumSize(QtCore.QSize(590, 300))
