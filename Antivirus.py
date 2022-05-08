@@ -1,14 +1,22 @@
 # imports
+from email import header
+from pstats import Stats
 from PyQt5 import QtCore, QtGui, QtWidgets
 from tkinter import filedialog
 from tkinter import messagebox
 from tkinter import *
 import webbrowser
+import requests
 import hashlib
 import json
 import sys
 import os
 from tkinter import *
+
+from virustotal_python import Virustotal
+import os.path
+from pprint import pprint
+
 
 # get current directory
 current_dir = os.path.dirname(__file__)
@@ -19,12 +27,13 @@ MD5_HASHES    = (current_dir + '\\hard_signatures\\MD5-Hashes.txt')
 SHA1_HASHES   = (current_dir + '\\hard_signatures\\SHA1-HASHES.json')
 
 # define Stuff
-VERSION = "1.0"
+VERSION = "2.1"
 DEV     = "cookie0_o, Len-Stevens"
 
 # url´s
 Report_issues = "https://github.com/cookie0o/Python-Antivirus-beta-ui/issues/new"
 Submit_sample = "https://github.com/cookie0o/Python-Antivirus-beta-ui/discussions/1"
+virus_total_api = "https://www.virustotal.com/api/v3/files/report"
 
 # remove file
 def removeFile(file):
@@ -37,12 +46,13 @@ def removeFile(file):
     
     try:
         os.remove(file)
-        response=messagebox.showinfo("Info", "File successfully deleted.")
+    except:
+        response=messagebox.showinfo("Error", "File could not be deleted.")
         # close thinker window when ok is clicked
         if response:
             root.destroy()
-    except:
-        response=messagebox.showinfo("Error", "File could not be deleted.")
+    finally:
+        response=messagebox.showinfo("Info", "File successfully deleted.")
         # close thinker window when ok is clicked
         if response:
             root.destroy()
@@ -61,8 +71,15 @@ def displayResults_VIRUS(self, file):
 
 
 def displayResults_CLEAN(self, file):
-    self.IsFileVirusY_N.setStyleSheet("color: green")
-    self.IsFileVirusY_N.setText("NO!")
+    # check if virus total check if on and file is under 32mb
+    if self.VirusTotalApicheckBox.isChecked() and os.path.getsize(file) < 32000000:
+        self.VirusTotalWidget.show()
+    else:
+        # hide Virus total results since it is not needed
+        self.VirusTotalWidget.hide()
+        # set text to clean
+        self.IsFileVirusY_N.setStyleSheet("color: green")
+        self.IsFileVirusY_N.setText("NO!")
 
     # delete file button
     self.DeleteFileButton.clicked.connect(lambda: removeFile(file))
@@ -139,11 +156,69 @@ def scan(file, self, MainWindow):
 
             f.close()
 
-        # display results of scan
-        if virus_found == True:
-            displayResults_VIRUS(self, file)
+
+        # check if Virus total api is checked and file is under 32mb then scan the file with Virus total
+        if self.VirusTotalApicheckBox.isChecked() and os.path.getsize(file) < 32000000:
+            # get api key
+            api_key = self.lineEdit.text()
+            # check if api key is empty if yes then show error
+            if api_key == "":
+                # define thinker root again (this is getting old) since it was destroyed
+                root = Tk()
+                # set ico
+                root.iconbitmap(current_dir + '\\res\\ico\\AntiVirus_ico.ico')
+                # set size
+                root.geometry("0x0")
+                # display error
+                response=messagebox.showinfo("Error", "Please enter a valid Virus Total API key.")
+                # close thinker window when ok is clicked
+                if response:
+                    root.destroy()
+            # if api key is not empty then scan the file
+            else:
+                # Create dictionary containing the file to send for multipart encoding upload
+                files = {"file": (os.path.basename(file), open(os.path.abspath(file), "rb"))}
+
+                # v3 example
+                vtotal = Virustotal(API_KEY=api_key)
+                resp = vtotal.request("files", files=files, method="POST")
+                id = resp.data["id"]
+                headers = {"x-apikey": api_key}
+                analysis = requests.get(f"https://www.virustotal.com/api/v3/analyses/{id}", headers=headers)
+                analysis_json = analysis.json()
+                detections = analysis_json["data"]["attributes"]["stats"]["malicious"]
+                not_detections = analysis_json["data"]["attributes"]["stats"]["undetected"]
+
+                # if detections more than half of not detections print red
+                if detections > not_detections:
+                    self.DetectionsText.setStyleSheet("color: red")
+                    self.DetectionsText.setText(f"{str(detections)} | {str(not_detections)}")
+                    self.IsFileVirusY_N.setStyleSheet("color: red")
+                    self.IsFileVirusY_N.setFont(QtGui.QFont("Arial", 12))
+                    self.IsFileVirusY_N.setText("Probably a virus!")
+                    # delete file button
+                    self.DeleteFileButton.clicked.connect(lambda: removeFile(file))
+                    # return button
+                    self.ReturnToHomeTabButton.clicked.connect(lambda: self.Tabs.setCurrentIndex(0))
+
+
+                else:
+                    self.DetectionsText.setStyleSheet("color: green")
+                    self.DetectionsText.setText(f"{str(detections)} | {str(not_detections)}")
+                    self.IsFileVirusY_N.setStyleSheet("color: green")
+                    self.IsFileVirusY_N.setFont(QtGui.QFont("Arial", 12))
+                    self.IsFileVirusY_N.setText("Probably clean")
+                    # delete file button
+                    self.DeleteFileButton.clicked.connect(lambda: removeFile(file))
+                    # return button
+                    self.ReturnToHomeTabButton.clicked.connect(lambda: self.Tabs.setCurrentIndex(0))
+
+
         else:
-            displayResults_CLEAN(self, file)
+            if virus_found == True:
+                displayResults_VIRUS(self, file)
+            else:
+                displayResults_CLEAN(self, file)
 
     except:
         # change tab to home tab
@@ -161,6 +236,9 @@ def scan(file, self, MainWindow):
         # close thinker window when ok is clicked
         if response:
             root.destroy()
+
+    finally:
+        return
 
 
 
@@ -196,13 +274,6 @@ def browseFiles(MainWindow, self):
 # UI (made with pyqt5)
 class Ui_MainWindow(object):
     def setupUi(self, MainWindow):
-        # Handle high resolution displays:
-        if hasattr(QtCore.Qt, 'AA_EnableHighDpiScaling'):
-            QtWidgets.QApplication.setAttribute(QtCore.Qt.AA_EnableHighDpiScaling, True)
-        if hasattr(QtCore.Qt, 'AA_UseHighDpiPixmaps'):
-            QtWidgets.QApplication.setAttribute(QtCore.Qt.AA_UseHighDpiPixmaps, True)
-        
-        # create Window
         MainWindow.setObjectName("MainWindow")
         MainWindow.resize(590, 300)
         MainWindow.setMinimumSize(QtCore.QSize(590, 300))
@@ -239,6 +310,7 @@ class Ui_MainWindow(object):
         self.SettingsTabButton.setObjectName("SettingsTabButton")
         self.Tabs = QtWidgets.QStackedWidget(MainWindow)
         self.Tabs.setGeometry(QtCore.QRect(50, 0, 591, 301))
+        self.Tabs.setStyleSheet("")
         self.Tabs.setObjectName("Tabs")
         self.HomeTab = QtWidgets.QWidget()
         self.HomeTab.setObjectName("HomeTab")
@@ -295,6 +367,33 @@ class Ui_MainWindow(object):
         self.textBrowser.setFrameShape(QtWidgets.QFrame.NoFrame)
         self.textBrowser.setOpenExternalLinks(True)
         self.textBrowser.setObjectName("textBrowser")
+        self.VirusTotalApicheckBox = QtWidgets.QCheckBox(self.SettingsTab)
+        self.VirusTotalApicheckBox.setGeometry(QtCore.QRect(5, 45, 456, 17))
+        font = QtGui.QFont()
+        font.setPointSize(10)
+        self.VirusTotalApicheckBox.setFont(font)
+        self.VirusTotalApicheckBox.setStyleSheet("QCheckBox::indicator {\n"
+"    background-color: rgb(65, 65, 65);\n"
+"}\n"
+"\n"
+"QCheckBox::indicator:checked {\n"
+"    image: url(:/res/Settings/check.svg);\n"
+"}")
+        self.VirusTotalApicheckBox.setObjectName("VirusTotalApicheckBox")
+        self.lineEdit = QtWidgets.QLineEdit(self.SettingsTab)
+        self.lineEdit.setGeometry(QtCore.QRect(5, 65, 391, 20))
+        self.lineEdit.setStyleSheet("background-color: rgb(65, 65, 65);\n"
+"\n"
+"border-width: 2px;\n"
+"border-radius: 10px;\n"
+"border-color: beige;")
+        self.lineEdit.setInputMask("")
+        self.lineEdit.setText("")
+        self.lineEdit.setMaxLength(32767)
+        self.lineEdit.setFrame(True)
+        self.lineEdit.setEchoMode(QtWidgets.QLineEdit.Password)
+        self.lineEdit.setAlignment(QtCore.Qt.AlignCenter)
+        self.lineEdit.setObjectName("lineEdit")
         self.Tabs.addWidget(self.SettingsTab)
         self.VirusScanResults_hidden = QtWidgets.QWidget()
         self.VirusScanResults_hidden.setObjectName("VirusScanResults_hidden")
@@ -372,6 +471,39 @@ class Ui_MainWindow(object):
         self.line.setText("")
         self.line.setIndent(-1)
         self.line.setObjectName("line")
+        self.VirusTotalWidget = QtWidgets.QWidget(self.VirusScanResults_hidden)
+        self.VirusTotalWidget.setGeometry(QtCore.QRect(255, 160, 281, 81))
+        self.VirusTotalWidget.setObjectName("VirusTotalWidget")
+        self.label_3 = QtWidgets.QLabel(self.VirusTotalWidget)
+        self.label_3.setGeometry(QtCore.QRect(10, 6, 261, 21))
+        font = QtGui.QFont()
+        font.setPointSize(15)
+        self.label_3.setFont(font)
+        self.label_3.setAlignment(QtCore.Qt.AlignHCenter|QtCore.Qt.AlignTop)
+        self.label_3.setObjectName("label_3")
+        self.DetectionsText = QtWidgets.QLabel(self.VirusTotalWidget)
+        self.DetectionsText.setGeometry(QtCore.QRect(16, 30, 251, 31))
+        font = QtGui.QFont()
+        font.setPointSize(26)
+        font.setBold(True)
+        font.setWeight(75)
+        self.DetectionsText.setFont(font)
+        self.DetectionsText.setAlignment(QtCore.Qt.AlignCenter)
+        self.DetectionsText.setObjectName("DetectionsText")
+        self.label_4 = QtWidgets.QLabel(self.VirusTotalWidget)
+        self.label_4.setGeometry(QtCore.QRect(230, 40, 261, 21))
+        font = QtGui.QFont()
+        font.setPointSize(15)
+        self.label_4.setFont(font)
+        self.label_4.setAlignment(QtCore.Qt.AlignHCenter|QtCore.Qt.AlignTop)
+        self.label_4.setObjectName("label_4")
+        self.label_5 = QtWidgets.QLabel(self.VirusTotalWidget)
+        self.label_5.setGeometry(QtCore.QRect(10, 60, 261, 21))
+        font = QtGui.QFont()
+        font.setPointSize(10)
+        self.label_5.setFont(font)
+        self.label_5.setAlignment(QtCore.Qt.AlignHCenter|QtCore.Qt.AlignTop)
+        self.label_5.setObjectName("label_5")
         self.VirusResultsTitle.raise_()
         self.FileName.raise_()
         self.FilePath.raise_()
@@ -383,6 +515,7 @@ class Ui_MainWindow(object):
         self.ButtonBackground_2.raise_()
         self.DeleteFileButton.raise_()
         self.line.raise_()
+        self.VirusTotalWidget.raise_()
         self.Tabs.addWidget(self.VirusScanResults_hidden)
         self.version_display = QtWidgets.QLabel(MainWindow)
         self.version_display.setGeometry(QtCore.QRect(1, 284, 47, 20))
@@ -419,24 +552,37 @@ class Ui_MainWindow(object):
 "<html><head><meta name=\"qrichtext\" content=\"1\" /><style type=\"text/css\">\n"
 "p, li { white-space: pre-wrap; }\n"
 "</style></head><body style=\" font-family:\'MS Shell Dlg 2\'; font-size:8.25pt; font-weight:400; font-style:normal;\">\n"
-f"<p style=\" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\"><a href=\"{Submit_sample}\"><span style=\" font-size:10pt; font-weight:600; text-decoration: underline; color:#000000;\">Report Virus Hashes</span></a><a href=\"https://github.com/cookie0o/Python-Antivirus-beta-ui/discussions/1\"><span style=\" font-size:10pt; text-decoration: underline; color:#0000ff;\"> here!</span></a></p></body></html>"))
+"<p style=\" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\"><a href=\"https://github.com/cookie0o/Python-Antivirus-beta-ui/discussions/1\"><span style=\" font-size:10pt; font-weight:600; text-decoration: underline; color:#000000;\">Report Virus Hashes</span></a><a href=\"https://github.com/cookie0o/Python-Antivirus-beta-ui/discussions/1\"><span style=\" font-size:10pt; text-decoration: underline; color:#0000ff;\"> here!</span></a></p></body></html>"))
+        self.VirusTotalApicheckBox.setText(_translate("MainWindow", "Use Virus Total api (only files under 32MB) (files will be uploaded publicly)")) 
+        self.lineEdit.setPlaceholderText(_translate("MainWindow", "Enter your Virus Total api Key here"))
         self.VirusResultsTitle.setText(_translate("MainWindow", "Virus Scan Results"))
-        self.FilePath.setText(_translate("MainWindow", "File Path: "))
         self.FileName.setText(_translate("MainWindow", "File Name: "))
+        self.FilePath.setText(_translate("MainWindow", "File Path: "))
         self.FileHash.setText(_translate("MainWindow", "File Hash: "))
         self.label.setText(_translate("MainWindow", "Is This File A Virus?"))
         self.IsFileVirusY_N.setText(_translate("MainWindow", "YES"))
         self.ReturnToHomeTabButton.setText(_translate("MainWindow", "Return"))
         self.DeleteFileButton.setText(_translate("MainWindow", "Delete File"))
+        self.label_3.setText(_translate("MainWindow", "Virus Total score"))
+        self.DetectionsText.setText(_translate("MainWindow", "0 | 0"))
+        self.label_4.setText(_translate("MainWindow", "Virus Total score"))
+        self.label_5.setText(_translate("MainWindow", "Detections"))
         self.version_display.setText(_translate("MainWindow", f"v{VERSION}"))
 # import resources
 import res.res_rc
 
 
 if __name__ == "__main__":
+    # Handle high resolution displays:
+    if hasattr(QtCore.Qt, 'AA_EnableHighDpiScaling'):
+        QtWidgets.QApplication.setAttribute(QtCore.Qt.AA_EnableHighDpiScaling, True)
+    if hasattr(QtCore.Qt, 'AA_UseHighDpiPixmaps'):
+        QtWidgets.QApplication.setAttribute(QtCore.Qt.AA_UseHighDpiPixmaps, True)
+    # create application
     app = QtWidgets.QApplication(sys.argv)
     MainWindow = QtWidgets.QWidget()
     ui = Ui_MainWindow()
     ui.setupUi(MainWindow)
     MainWindow.show()
     sys.exit(app.exec_())
+
