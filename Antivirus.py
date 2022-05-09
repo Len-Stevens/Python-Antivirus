@@ -8,7 +8,6 @@ import configparser
 import webbrowser
 import requests
 import hashlib
-import json
 import sys
 import os
 
