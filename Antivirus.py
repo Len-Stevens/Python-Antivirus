@@ -1,7 +1,4 @@
 # imports
-from email import header
-from http.client import REQUESTED_RANGE_NOT_SATISFIABLE
-from pstats import Stats
 from PyQt5 import QtCore, QtGui, QtWidgets
 from virustotal_python import Virustotal
 from tkinter import filedialog
@@ -14,7 +11,6 @@ import hashlib
 import json
 import sys
 import os
-from tkinter import *
 
 
 # get current directory
@@ -28,92 +24,117 @@ config = configparser.ConfigParser()
 config.read(settings_file_path)
 
 # get files with Virus hashes inside
-SHA256_HASHES = (current_dir + '\\hard_signatures\\SHA256-Hashes.txt')
-MD5_HASHES    = (current_dir + '\\hard_signatures\\MD5-Hashes.txt')
-SHA1_HASHES   = (current_dir + '\\hard_signatures\\SHA1-HASHES.json')
+SHA256_HASHES_pack1 = (current_dir + '\\hard_signatures\\SHA256-Hashes_pack1.txt')
+SHA256_HASHES_pack2 = (current_dir + '\\hard_signatures\\SHA256-Hashes_pack2.txt')
+SHA256_HASHES_pack3 = (current_dir + '\\hard_signatures\\SHA256-Hashes_pack3.txt')
 
 # define Stuff
-VERSION = "2.2"
+VERSION = "2.3"
 DEV     = "cookie0_o, Len-Stevens"
 
 # url´s
 Report_issues = "https://github.com/cookie0o/Python-Antivirus-beta-ui/issues/new"
 Submit_sample = "https://github.com/cookie0o/Python-Antivirus-beta-ui/discussions/1"
 virus_total_api = "https://www.virustotal.com/api/v3/files/report"
+meta_defender_api = "https://api.metadefender.com/v4/hash/" # + hash
 
 # save settings to settings/settings.ini
 def SaveSettings(self):
-    # get api key
+    # get api keys
     api_key = self.VirusTotalApiKey.text()
+    MetaDefenderApiKey = self.MetaDefenderApiKey.text()
     # get VirusTotal scan checkbox status
-    virus_total_scan = self.checkBox.isChecked()
+    virus_total_scan = self.UseVirusTotalApiCheckBox.isChecked()
+    meta_defender_scan = self.UseMetaDefenderApiCheckBox.isChecked()
     self.VirusTotalApiKey.setText(api_key)
+    self.MetaDefenderApiKey.text()
 
     config['-settings-']['VirusTotalScan'] = str(virus_total_scan)
     config['-settings-']['VirusTotalApiKey'] = str(api_key)
+    config["-settings-"]["MetaDefenderScan"] = str(meta_defender_scan)
+    config["-settings-"]["MetaDefenderApiKey"] = str(MetaDefenderApiKey)
 
-    with open(settings_file_path, 'w') as configfile:    # save
+    with open(settings_file_path, 'w') as configfile: # save
         config.write(configfile)
+
+    return
 
     
 # remove file
 def removeFile(file):
-    # define thinker root again AGAIN since it was destroyed 3 times now xD
-    root = Tk()
-    # set ico
-    root.iconbitmap(current_dir + '\\res\\ico\\AntiVirus_ico.ico')
-    # set size
-    root.geometry("0x0")
-    
-    try:
-        os.remove(file)
-    except:
-        response=messagebox.showinfo("Error", "File could not be deleted.")
-        # close thinker window when ok is clicked
-        if response:
-            root.destroy()
-    finally:
-        response=messagebox.showinfo("Info", "File successfully deleted.")
-        # close thinker window when ok is clicked
-        if response:
-            root.destroy()
+        # define thinker root again AGAIN since it was destroyed 3 times now xD
+        root = Tk()
+        # set ico
+        root.iconbitmap(current_dir + '\\res\\ico\\AntiVirus_ico.ico')
+        # set size
+        root.geometry("0x0")
+        
+        try:
+            os.remove(file)
+        except:
+            response=messagebox.showinfo("Error", "File could not be deleted.")
+            # close thinker window when ok is clicked
+            if response:
+                root.destroy()
+        finally:
+            response=messagebox.showinfo("Info", "File successfully deleted.")
+            # close thinker window when ok is clicked
+            if response:
+                root.destroy()
 
 
 # display results
 def displayResults_VIRUS(self, file):
-    self.IsFileVirusY_N.setStyleSheet("color: red")
-    self.IsFileVirusY_N.setText("YES!")
-
+    self.Tabs.setCurrentIndex(2)
+    # check if virus total check if on and file is under 32mb
+    if self.UseVirusTotalApiCheckBox.isChecked() and os.path.getsize(file) < 32000000:
+        self.VirusTotalWidget.show()
+    else:
+        # hide Virus total results since it is not needed
+        self.VirusTotalWidget.hide()
+    # check if meta defender check if on and file is under 120mb
+    if self.UseMetaDefenderApiCheckBox.isChecked() and os.path.getsize(file) < 120000000:
+        self.MetaDefenderWidget.show()
+    else:
+        # hide meta defender results since it is not needed
+        self.MetaDefenderWidget.hide()
+        self.IsFileVirusY_N.setStyleSheet("color: red")
+        self.IsFileVirusY_N.setText("YES!")
     # delete file button
     self.DeleteFileButton.clicked.connect(lambda: removeFile(file))
-
     # return button
     self.ReturnToHomeTabButton.clicked.connect(lambda: self.Tabs.setCurrentIndex(0))
 
 
 def displayResults_CLEAN(self, file):
+    self.Tabs.setCurrentIndex(2)
     # check if virus total check if on and file is under 32mb
-    if self.VirusTotalApicheckBox.isChecked() and os.path.getsize(file) < 32000000:
+    if self.UseVirusTotalApiCheckBox.isChecked() and os.path.getsize(file) < 32000000:
         self.VirusTotalWidget.show()
     else:
         # hide Virus total results since it is not needed
         self.VirusTotalWidget.hide()
+    # check if meta defender check if on and file is under 120mb
+    if self.UseMetaDefenderApiCheckBox.isChecked() and os.path.getsize(file) < 120000000:
+        self.MetaDefenderWidget.show()
+    else:
+        # hide meta defender results since it is not needed
+        self.MetaDefenderWidget.hide()
         # set text to clean
         self.IsFileVirusY_N.setStyleSheet("color: green")
         self.IsFileVirusY_N.setText("NO!")
-
     # delete file button
     self.DeleteFileButton.clicked.connect(lambda: removeFile(file))
-
     # return button
     self.ReturnToHomeTabButton.clicked.connect(lambda: self.Tabs.setCurrentIndex(0))
 
 
 def scan(file, self, MainWindow):
     try:
+
+        # change tab to loading tab
+        self.Tabs.setCurrentIndex(3)
         
-        # goto hidden results tab
-        self.Tabs.setCurrentIndex(2)
 
         # default virus found to false
         virus_found = False
@@ -129,117 +150,191 @@ def scan(file, self, MainWindow):
 
         # check if from the selected is = to a hash in the virus hash list
 
-        # SHA256 HASHES check
-        with open(SHA1_HASHES,'r') as f:
+        # SHA256 HASHES check + pack 1
+        with open(SHA256_HASHES_pack1,'r') as f:
             lines = [line.rstrip() for line in f]
             for line in lines:
                 if str(readable_hash) == str(line.split(";")[0]):
                     virus_found = True
+                    f.close()
         f.close()
-
-
-
-        # check if virus is found else pass and check next hash
+        # check if virus is found else pass
         if virus_found == True:
-            displayResults_VIRUS(self, file)
-            return
+            pass
         else:
             pass
-
-
-
-        # MD5 HASHES check
-        with open(MD5_HASHES,'r') as f:
-            lines = [line.rstrip() for line in f]
-            for line in lines:
-                if str(readable_hash) == str(line.split(";")[0]):
-                    virus_found = True
-        f.close()
-
-
-
-        # check if virus is found else pass and check next hash
-        if virus_found == True:
-            displayResults_VIRUS(self, file)
-            return
-        else:
-            pass
-
-
-
-        # SHA1 HASHES check
-        with open(SHA1_HASHES, 'r') as f:
-            dataset = json.loads(f.read())
-
-            for index, item in enumerate(dataset["data"]):
-                if str(item['hash']) == str(readable_hash):
-                    virus_found = True
-
+        if virus_found == False:
+            # SHA256 HASHES check + pack 2
+            with open(SHA256_HASHES_pack2,'r') as f:
+                lines = [line.rstrip() for line in f]
+                for line in lines:
+                    if str(readable_hash) == str(line.split(";")[0]):
+                        virus_found = True
+                        f.close()
             f.close()
-
-
-        # check if Virus total api is checked and file is under 32mb then scan the file with Virus total
-        if self.VirusTotalApicheckBox.isChecked() and os.path.getsize(file) < 32000000:
-            # get api key
-            api_key = self.VirusTotalApiKey.text()
-            # check if api key is empty if yes then show error
-            if api_key == "":
-                # define thinker root again (this is getting old) since it was destroyed
-                root = Tk()
-                # set ico
-                root.iconbitmap(current_dir + '\\res\\ico\\AntiVirus_ico.ico')
-                # set size
-                root.geometry("0x0")
-                # display error
-                response=messagebox.showinfo("Error", "Please enter a valid Virus Total API key.")
-                # close thinker window when ok is clicked
-                if response:
-                    root.destroy()
-            # if api key is not empty then scan the file
-            else:
-                # Create dictionary containing the file to send for multipart encoding upload
-                files = {"file": (os.path.basename(file), open(os.path.abspath(file), "rb"))}
-
-                # v3 example
-                vtotal = Virustotal(API_KEY=api_key)
-                resp = vtotal.request("files", files=files, method="POST")
-                id = resp.data["id"]
-                headers = {"x-apikey": api_key}
-                analysis = requests.get(f"https://www.virustotal.com/api/v3/analyses/{id}", headers=headers)
-                analysis_json = analysis.json()
-                detections = analysis_json["data"]["attributes"]["stats"]["malicious"]
-                not_detections = analysis_json["data"]["attributes"]["stats"]["undetected"]
-
-                # if detections more than half of not detections print red
-                if detections > not_detections:
-                    self.DetectionsText.setStyleSheet("color: red")
-                    self.DetectionsText.setText(f"{str(detections)} | {str(not_detections)}")
-                    self.IsFileVirusY_N.setStyleSheet("color: red")
-                    self.IsFileVirusY_N.setFont(QtGui.QFont("Arial", 12))
-                    self.IsFileVirusY_N.setText("Probably a virus!")
-                    # delete file button
-                    self.DeleteFileButton.clicked.connect(lambda: removeFile(file))
-                    # return button
-                    self.ReturnToHomeTabButton.clicked.connect(lambda: self.Tabs.setCurrentIndex(0))
-
-
-                else:
-                    self.DetectionsText.setStyleSheet("color: green")
-                    self.DetectionsText.setText(f"{str(detections)} | {str(not_detections)}")
-                    self.IsFileVirusY_N.setStyleSheet("color: green")
-                    self.IsFileVirusY_N.setFont(QtGui.QFont("Arial", 12))
-                    self.IsFileVirusY_N.setText("Probably clean")
-                    # delete file button
-                    self.DeleteFileButton.clicked.connect(lambda: removeFile(file))
-                    # return button
-                    self.ReturnToHomeTabButton.clicked.connect(lambda: self.Tabs.setCurrentIndex(0))
-
-
         else:
-            if virus_found == True:
-                displayResults_VIRUS(self, file)
+            pass
+        if virus_found == False:
+            # SHA256 HASHES check + pack 3
+            with open(SHA256_HASHES_pack3,'r') as f:
+                lines = [line.rstrip() for line in f]
+                for line in lines:
+                    if str(readable_hash) == str(line.split(";")[0]):
+                        virus_found = True
+                        f.close()
+            f.close()
+        else:
+            pass
+
+        try:
+            # check if Virus total api is checked and file is under 32mb then scan the file with Virus total
+            if self.UseVirusTotalApiCheckBox.isChecked() and os.path.getsize(file) < 32000000:
+                # get api key
+                api_key = self.VirusTotalApiKey.text()
+                # check if api key is empty if yes then show error
+                if api_key == "":
+                    # define thinker root again (this is getting old) since it was destroyed
+                    root = Tk()
+                    # set ico
+                    root.iconbitmap(current_dir + '\\res\\ico\\AntiVirus_ico.ico')
+                    # set size
+                    root.geometry("0x0")
+                    # display error
+                    response=messagebox.showinfo("Error", "Please enter a valid Virus Total API key.")
+                    # close thinker window when ok is clicked
+                    if response:
+                        root.destroy()
+                # if api key is not empty then scan the file
+                else:
+                    # Create dictionary containing the file to send for multipart encoding upload
+                    files = {"file": (os.path.basename(file), open(os.path.abspath(file), "rb"))}
+
+                    vtotal = Virustotal(API_KEY=api_key)
+                    resp = vtotal.request("files", files=files, method="POST")
+                    id = resp.data["id"]
+                    headers = {"x-apikey": api_key}
+                    analysis = requests.get(f"https://www.virustotal.com/api/v3/analyses/{id}", headers=headers)
+                    analysis_json = analysis.json()
+                    detections = analysis_json["data"]["attributes"]["stats"]["malicious"]
+                    not_detections = analysis_json["data"]["attributes"]["stats"]["undetected"]
+                    # show Virus total results
+                    self.VirusTotalWidget.show()
+                    # if detections more than half of not detections print red
+                    if detections > not_detections:
+                        self.DetectionsText.setStyleSheet("color: red")
+                        self.DetectionsText.setText(f"{str(detections)}")
+                        if virus_found == False:
+                            self.IsFileVirusY_N.setFont(QtGui.QFont("Arial", 10))
+                            self.IsFileVirusY_N.setText("Probably a virus!")
+                        else:
+                            displayResults_VIRUS(self, file)
+                    else:
+                        self.DetectionsText.setStyleSheet("color: green")
+                        self.DetectionsText.setText(f"{str(detections)}")
+                        if virus_found == False:
+                            self.IsFileVirusY_N.setStyleSheet("color: green")
+                            self.IsFileVirusY_N.setFont(QtGui.QFont("Arial", 12))
+                            self.IsFileVirusY_N.setText("Probably clean")
+                        else:
+                            displayResults_VIRUS(self, file)
             else:
-                displayResults_CLEAN(self, file)
+                pass
+        except:
+            # define thinker root again (this is getting very old) since it was destroyed
+            root = Tk()
+            # set ico
+            root.iconbitmap(current_dir + '\\res\\ico\\AntiVirus_ico.ico')
+            # set size
+            root.geometry("0x0")
+            # display error
+            response=messagebox.showinfo("Error", "Cant scan file with Virus Total.")
+            # hide Virus Total results
+            self.VirusTotalWidget.hide()
+            # close thinker window when ok is clicked
+            if response:
+                root.destroy()
+                pass
+
+        try:
+            # Meta Defender hash check
+            if self.UseMetaDefenderApiCheckBox.isChecked():
+                # get api key
+                MetaDefenderApiKey = self.MetaDefenderApiKey.text()
+                # check if api key is empty if yes then show error
+                if MetaDefenderApiKey == "":
+                    # define thinker root again (this is getting very old) since it was destroyed
+                    root = Tk()
+                    # set ico
+                    root.iconbitmap(current_dir + '\\res\\ico\\AntiVirus_ico.ico')
+                    # set size
+                    root.geometry("0x0")
+                    # display error
+                    response=messagebox.showinfo("Error", "Please enter a valid Meta Defender API key.")
+                    # close thinker window when ok is clicked
+                    if response:
+                        root.destroy()
+                # if api key is not empty then scan the hash of the file
+                else:
+                    M_header=({"apikey": MetaDefenderApiKey})
+                    M_analysis = requests.get(meta_defender_api + readable_hash, headers=M_header)
+                    M_analysis_json = M_analysis.json()
+                    M_detections = M_analysis_json["scan_results"]["total_detected_avs"]
+                    M_not_detections = M_analysis_json["scan_results"]["total_avs"]
+                    half_M_not_detections = M_not_detections / 2
+                    # show Meta Defender results
+                    self.MetaDefenderWidget.show()
+                    # if detections more than half of not detections print red
+                    if M_detections > half_M_not_detections:
+                        self.MetaDefenderDetectionsText.setStyleSheet("color: red")
+                        self.MetaDefenderDetectionsText.setText(f"{str(M_detections)} | {str(M_not_detections)}")
+                        self.IsFileVirusY_N.setStyleSheet("color: red")
+                        if virus_found == False:
+                            self.IsFileVirusY_N.setFont(QtGui.QFont("Arial", 10))
+                            self.IsFileVirusY_N.setText("Probably a virus!")
+                        else:
+                            displayResults_VIRUS(self, file)
+                    else:
+                        self.MetaDefenderDetectionsText.setStyleSheet("color: green")
+                        self.MetaDefenderDetectionsText.setText(f"{str(M_detections)} | {str(M_not_detections)}")
+                        if virus_found == False:
+                            self.IsFileVirusY_N.setStyleSheet("color: green")
+                            self.IsFileVirusY_N.setFont(QtGui.QFont("Arial", 12))
+                            self.IsFileVirusY_N.setText("Probably clean")
+                        else:
+                            displayResults_VIRUS(self, file)
+
+            else:
+                # goto hidden results tab
+                self.Tabs.setCurrentIndex(2)
+                if virus_found == True:
+                    displayResults_VIRUS(self, file)
+                else:
+                    displayResults_CLEAN(self, file)
+        except:
+            # define thinker root again (this is getting very old) since it was destroyed
+            root = Tk()
+            # set ico
+            root.iconbitmap(current_dir + '\\res\\ico\\AntiVirus_ico.ico')
+            # set size
+            root.geometry("0x0")
+            # display error
+            response=messagebox.showinfo("Error", "Cant scan file with Meta Defender.")
+            # hide meta defender results
+            self.MetaDefenderWidget.hide()
+            # close thinker window when ok is clicked
+            if response:
+                root.destroy()
+                pass
+        
+        finally:
+            # goto hidden results tab
+            self.Tabs.setCurrentIndex(2)
+
+            # delete file button
+            self.DeleteFileButton.clicked.connect(lambda: removeFile(file))
+            # return button
+            self.ReturnToHomeTabButton.clicked.connect(lambda: self.Tabs.setCurrentIndex(0))
+
 
     except:
         # change tab to home tab
@@ -388,21 +483,24 @@ class Ui_MainWindow(object):
         self.textBrowser.setFrameShape(QtWidgets.QFrame.NoFrame)
         self.textBrowser.setOpenExternalLinks(True)
         self.textBrowser.setObjectName("textBrowser")
-        self.checkBox = QtWidgets.QCheckBox(self.SettingsTab)
-        self.checkBox.setGeometry(QtCore.QRect(5, 45, 600, 17))
+        self.UseVirusTotalApiCheckBox = QtWidgets.QCheckBox(self.SettingsTab)
+        self.UseVirusTotalApiCheckBox.setGeometry(QtCore.QRect(5, 45, 451, 17))
         font = QtGui.QFont()
         font.setPointSize(10)
-        self.checkBox.setFont(font)
-        self.checkBox.setStyleSheet("QCheckBox::indicator {\n"
+        self.UseVirusTotalApiCheckBox.setFont(font)
+        self.UseVirusTotalApiCheckBox.setStyleSheet("QCheckBox::indicator {\n"
 "    background-color: rgb(65, 65, 65);\n"
 "}\n"
 "\n"
 "QCheckBox::indicator:checked {\n"
 "    image: url(:/res/Settings/check.svg);\n"
 "}")
-        self.checkBox.setObjectName("checkBox")
+        self.UseVirusTotalApiCheckBox.setObjectName("UseVirusTotalApiCheckBox")
         self.VirusTotalApiKey = QtWidgets.QLineEdit(self.SettingsTab)
         self.VirusTotalApiKey.setGeometry(QtCore.QRect(5, 65, 391, 20))
+        font = QtGui.QFont()
+        font.setPointSize(7)
+        self.VirusTotalApiKey.setFont(font)
         self.VirusTotalApiKey.setStyleSheet("background-color: rgb(65, 65, 65);\n"
 "\n"
 "border-width: 2px;\n"
@@ -427,12 +525,41 @@ class Ui_MainWindow(object):
         self.Background_5.setStyleSheet("background-color: rgb(74, 74, 74);")
         self.Background_5.setText("")
         self.Background_5.setObjectName("Background_5")
+        self.UseMetaDefenderApiCheckBox = QtWidgets.QCheckBox(self.SettingsTab)
+        self.UseMetaDefenderApiCheckBox.setGeometry(QtCore.QRect(5, 90, 481, 17))
+        font = QtGui.QFont()
+        font.setPointSize(10)
+        self.UseMetaDefenderApiCheckBox.setFont(font)
+        self.UseMetaDefenderApiCheckBox.setStyleSheet("QCheckBox::indicator {\n"
+"    background-color: rgb(65, 65, 65);\n"
+"}\n"
+"\n"
+"QCheckBox::indicator:checked {\n"
+"    image: url(:/res/Settings/check.svg);\n"
+"}")
+        self.UseMetaDefenderApiCheckBox.setObjectName("UseMetaDefenderApiCheckBox")
+        self.MetaDefenderApiKey = QtWidgets.QLineEdit(self.SettingsTab)
+        self.MetaDefenderApiKey.setGeometry(QtCore.QRect(5, 110, 391, 20))
+        self.MetaDefenderApiKey.setStyleSheet("background-color: rgb(65, 65, 65);\n"
+"\n"
+"border-width: 2px;\n"
+"border-radius: 10px;\n"
+"border-color: beige;")
+        self.MetaDefenderApiKey.setInputMask("")
+        self.MetaDefenderApiKey.setText("")
+        self.MetaDefenderApiKey.setMaxLength(32767)
+        self.MetaDefenderApiKey.setFrame(True)
+        self.MetaDefenderApiKey.setEchoMode(QtWidgets.QLineEdit.Password)
+        self.MetaDefenderApiKey.setAlignment(QtCore.Qt.AlignCenter)
+        self.MetaDefenderApiKey.setObjectName("MetaDefenderApiKey")
         self.Background_5.raise_()
         self.SettingsTitle.raise_()
         self.textBrowser.raise_()
-        self.checkBox.raise_()
+        self.UseVirusTotalApiCheckBox.raise_()
         self.VirusTotalApiKey.raise_()
         self.SaveSettingsButton.raise_()
+        self.UseMetaDefenderApiCheckBox.raise_()
+        self.MetaDefenderApiKey.raise_()
         self.Tabs.addWidget(self.SettingsTab)
         self.VirusScanResults_hidden = QtWidgets.QWidget()
         self.VirusScanResults_hidden.setObjectName("VirusScanResults_hidden")
@@ -511,17 +638,17 @@ class Ui_MainWindow(object):
         self.line.setIndent(-1)
         self.line.setObjectName("line")
         self.VirusTotalWidget = QtWidgets.QWidget(self.VirusScanResults_hidden)
-        self.VirusTotalWidget.setGeometry(QtCore.QRect(255, 160, 281, 81))
+        self.VirusTotalWidget.setGeometry(QtCore.QRect(120, 160, 181, 81))
         self.VirusTotalWidget.setObjectName("VirusTotalWidget")
         self.label_3 = QtWidgets.QLabel(self.VirusTotalWidget)
-        self.label_3.setGeometry(QtCore.QRect(10, 6, 261, 21))
+        self.label_3.setGeometry(QtCore.QRect(10, 10, 161, 21))
         font = QtGui.QFont()
         font.setPointSize(15)
         self.label_3.setFont(font)
         self.label_3.setAlignment(QtCore.Qt.AlignHCenter|QtCore.Qt.AlignTop)
         self.label_3.setObjectName("label_3")
         self.DetectionsText = QtWidgets.QLabel(self.VirusTotalWidget)
-        self.DetectionsText.setGeometry(QtCore.QRect(16, 30, 251, 31))
+        self.DetectionsText.setGeometry(QtCore.QRect(10, 30, 161, 31))
         font = QtGui.QFont()
         font.setPointSize(26)
         font.setBold(True)
@@ -529,20 +656,45 @@ class Ui_MainWindow(object):
         self.DetectionsText.setFont(font)
         self.DetectionsText.setAlignment(QtCore.Qt.AlignCenter)
         self.DetectionsText.setObjectName("DetectionsText")
-        self.label_4 = QtWidgets.QLabel(self.VirusTotalWidget)
-        self.label_4.setGeometry(QtCore.QRect(230, 40, 261, 21))
-        font = QtGui.QFont()
-        font.setPointSize(15)
-        self.label_4.setFont(font)
-        self.label_4.setAlignment(QtCore.Qt.AlignHCenter|QtCore.Qt.AlignTop)
-        self.label_4.setObjectName("label_4")
         self.label_5 = QtWidgets.QLabel(self.VirusTotalWidget)
-        self.label_5.setGeometry(QtCore.QRect(10, 60, 261, 21))
+        self.label_5.setGeometry(QtCore.QRect(10, 57, 161, 21))
         font = QtGui.QFont()
         font.setPointSize(10)
         self.label_5.setFont(font)
         self.label_5.setAlignment(QtCore.Qt.AlignHCenter|QtCore.Qt.AlignTop)
         self.label_5.setObjectName("label_5")
+        self.label_3.raise_()
+        self.label_5.raise_()
+        self.DetectionsText.raise_()
+        self.MetaDefenderWidget = QtWidgets.QWidget(self.VirusScanResults_hidden)
+        self.MetaDefenderWidget.setGeometry(QtCore.QRect(310, 160, 221, 81))
+        self.MetaDefenderWidget.setObjectName("MetaDefenderWidget")
+        self.label_4 = QtWidgets.QLabel(self.MetaDefenderWidget)
+        self.label_4.setGeometry(QtCore.QRect(10, 10, 201, 21))
+        font = QtGui.QFont()
+        font.setPointSize(15)
+        self.label_4.setFont(font)
+        self.label_4.setAlignment(QtCore.Qt.AlignHCenter|QtCore.Qt.AlignTop)
+        self.label_4.setObjectName("label_4")
+        self.MetaDefenderDetectionsText = QtWidgets.QLabel(self.MetaDefenderWidget)
+        self.MetaDefenderDetectionsText.setGeometry(QtCore.QRect(10, 30, 201, 31))
+        font = QtGui.QFont()
+        font.setPointSize(26)
+        font.setBold(True)
+        font.setWeight(75)
+        self.MetaDefenderDetectionsText.setFont(font)
+        self.MetaDefenderDetectionsText.setAlignment(QtCore.Qt.AlignCenter)
+        self.MetaDefenderDetectionsText.setObjectName("MetaDefenderDetectionsText")
+        self.label_6 = QtWidgets.QLabel(self.MetaDefenderWidget)
+        self.label_6.setGeometry(QtCore.QRect(10, 57, 201, 21))
+        font = QtGui.QFont()
+        font.setPointSize(10)
+        self.label_6.setFont(font)
+        self.label_6.setAlignment(QtCore.Qt.AlignHCenter|QtCore.Qt.AlignTop)
+        self.label_6.setObjectName("label_6")
+        self.label_4.raise_()
+        self.label_6.raise_()
+        self.MetaDefenderDetectionsText.raise_()
         self.VirusResultsTitle.raise_()
         self.FileName.raise_()
         self.FilePath.raise_()
@@ -555,6 +707,7 @@ class Ui_MainWindow(object):
         self.DeleteFileButton.raise_()
         self.line.raise_()
         self.VirusTotalWidget.raise_()
+        self.MetaDefenderWidget.raise_()
         self.Tabs.addWidget(self.VirusScanResults_hidden)
         self.LoadingPage = QtWidgets.QWidget()
         self.LoadingPage.setObjectName("LoadingPage")
@@ -587,12 +740,22 @@ class Ui_MainWindow(object):
         # read settings from ini file
         VirustotalScan = config.get('-settings-', 'VirusTotalScan')
         api_key = config.get('-settings-', 'VirusTotalApiKey')
+        MetaDefenderScan = config.get('-settings-', 'MetaDefenderScan')
+        MetaDefenderApiKey = config.get('-settings-', 'MetaDefenderApiKey')
+
         if VirustotalScan == 'True':
-            self.checkBox.setChecked(True)
+            self.UseVirusTotalApiCheckBox.setChecked(True)
         else:
-            self.checkBox.setChecked(False)
+            self.UseVirusTotalApiCheckBox.setChecked(False)
         self.VirusTotalApiKey.setText(api_key)
-        
+
+        if MetaDefenderScan == 'True':
+            self.UseMetaDefenderApiCheckBox.setChecked(True)
+        else:
+            self.UseMetaDefenderApiCheckBox.setChecked(False)
+        self.MetaDefenderApiKey.setText(MetaDefenderApiKey)
+
+
 
         # change tabs buttons
         self.HomeTabButton.clicked.connect(lambda: self.Tabs.setCurrentIndex(0))
@@ -620,9 +783,11 @@ class Ui_MainWindow(object):
 "p, li { white-space: pre-wrap; }\n"
 "</style></head><body style=\" font-family:\'MS Shell Dlg 2\'; font-size:8.25pt; font-weight:400; font-style:normal;\">\n"
 "<p style=\" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\"><a href=\"https://github.com/cookie0o/Python-Antivirus-beta-ui/discussions/1\"><span style=\" font-size:10pt; font-weight:600; text-decoration: underline; color:#000000;\">Report Virus Hashes</span></a><a href=\"https://github.com/cookie0o/Python-Antivirus-beta-ui/discussions/1\"><span style=\" font-size:10pt; text-decoration: underline; color:#0000ff;\"> here!</span></a></p></body></html>"))
-        self.checkBox.setText(_translate("MainWindow", "Use Virus Total api (only files under 32MB) (files will be uploaded publicly)"))
+        self.UseVirusTotalApiCheckBox.setText(_translate("MainWindow", "Use Virus Total api (only files under 32MB) (files will be uploaded publicly)"))
         self.VirusTotalApiKey.setPlaceholderText(_translate("MainWindow", "Enter your Virus Total api Key here"))
         self.SaveSettingsButton.setText(_translate("MainWindow", "Safe config"))
+        self.UseMetaDefenderApiCheckBox.setText(_translate("MainWindow", "Use Meta Defender api to check hash"))
+        self.MetaDefenderApiKey.setPlaceholderText(_translate("MainWindow", "Enter your Meta Defender api Key here"))
         self.VirusResultsTitle.setText(_translate("MainWindow", "Virus Scan Results"))
         self.FileName.setText(_translate("MainWindow", "File Name: "))
         self.FilePath.setText(_translate("MainWindow", "File Path: "))
@@ -632,14 +797,14 @@ class Ui_MainWindow(object):
         self.ReturnToHomeTabButton.setText(_translate("MainWindow", "Return"))
         self.DeleteFileButton.setText(_translate("MainWindow", "Delete File"))
         self.label_3.setText(_translate("MainWindow", "Virus Total score"))
-        self.DetectionsText.setText(_translate("MainWindow", "0 | 0"))
-        self.label_4.setText(_translate("MainWindow", "Virus Total score"))
+        self.DetectionsText.setText(_translate("MainWindow", "-"))
         self.label_5.setText(_translate("MainWindow", "Detections"))
-        self.LoadingPageTitle.setText(_translate("MainWindow", "Loading screen"))
+        self.label_4.setText(_translate("MainWindow", "Meta Defender score"))
+        self.MetaDefenderDetectionsText.setText(_translate("MainWindow", "-"))
+        self.label_6.setText(_translate("MainWindow", "Detections"))
         self.version_display.setText(_translate("MainWindow", f"v{VERSION}"))
 # import resources
 import res.res_rc
-
 
 if __name__ == "__main__":
     # Handle high resolution displays:
