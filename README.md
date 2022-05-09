@@ -7,10 +7,10 @@ Thank You! :)
 ![Main_ui](https://user-images.githubusercontent.com/81589649/167272203-821e9ea5-459e-472a-ae56-feab1eb67a7e.png)
 
 ## Example file scanned
-![scanned](https://user-images.githubusercontent.com/81589649/167302813-f4a72402-0e6b-4d32-a73d-f87bf63bbbfa.png)
+![scanned](https://user-images.githubusercontent.com/81589649/167488635-a4553d94-945f-4da4-a4c9-7ce121410247.png)
 
 ## Settings tab
-![Settings_Tab](https://user-images.githubusercontent.com/81589649/167316096-f0b9ef27-1f74-4a53-93f6-2d4901cdaa24.png)
+![settings_tab](https://user-images.githubusercontent.com/81589649/167488619-d867fffc-46f5-4a86-8119-9a8833412f7d.png)
 
 ## Donate Crypto
 **[BTC];**``󠀠bc1qz5q86hrj4n983vxey3mxrrd7227ueacdfz56c9``  
