@@ -1,10 +1,26 @@
-# Python-Antivirus
+# **Python-Antivirus-v2**
 A simple antivirus coded in python capable of scanning selected files and deleting files that it detects as infected. This antivirus uses a large list of MD5, SHA1 and SHA256 malware hashes (many of which coming from this repo - https://github.com/Len-Stevens/MD5-Malware-Hashes) to determine infections. However as this project progresses I would like to implement machine learning detection with the long term goal of becoming a fully functioning antivirus. 
-
-If you would like to download the project there are 2 options: You can either simpily download the prject and run the .exe file and your done :)
-Alternativly you can download the code and compile it yourself. You will also need to dowload the .zip files and extract them to the same directory as the script to make it work :) 
 
 Thank You! :)
 
-![image](https://user-images.githubusercontent.com/79765504/110012476-3c13e500-7d29-11eb-9642-d41edc75aef0.png)
+## Ui main Tab
+![Main_ui](https://user-images.githubusercontent.com/81589649/167272203-821e9ea5-459e-472a-ae56-feab1eb67a7e.png)
 
+## Example file scanned
+![scanned](https://user-images.githubusercontent.com/81589649/167488635-a4553d94-945f-4da4-a4c9-7ce121410247.png)
+
+## Settings tab
+![settings_tab](https://user-images.githubusercontent.com/81589649/167488619-d867fffc-46f5-4a86-8119-9a8833412f7d.png)
+
+## Donate Crypto
+**[BTC];**``󠀠bc1qz5q86hrj4n983vxey3mxrrd7227ueacdfz56c9``  
+**[ETH];**``0x1556536283e5d3A8EA790A2d79266ffec9d7d684``  
+**[DOGE];**``DHBgSnHnHRVWSnbigfAYvPuwWQG1yLxmvH``  
+**[LTC];**``LbnYUMif4PPD1rBGLTWJZ23BQ3jyt884Gn``  
+**[SHIB];**``0x1556536283e5d3A8EA790A2d79266ffec9d7d684``  
+**[SOL];**``LBrSZa5hcXgTPjrPKrx4Cp6QafpZ98TkwZWfAi6p3o3``  
+**[CAKE];**``0x1556536283e5d3A8EA790A2d79266ffec9d7d684``  
+
+### devs
+![@cookie0o](https://github.com/cookie0o)
+![@Len-Stevens](https://github.com/Len-Stevens)
