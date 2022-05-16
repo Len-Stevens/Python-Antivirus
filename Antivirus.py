@@ -18,6 +18,7 @@ current_dir = os.path.dirname(__file__)
 # settings.ini file path
 settings_file_path = current_dir + '/settings/settings.ini'
 
+
 # define config
 config = configparser.ConfigParser()
 config.read(settings_file_path)
@@ -28,7 +29,7 @@ SHA256_HASHES_pack2 = (current_dir + '\\hard_signatures\\SHA256-Hashes_pack2.txt
 SHA256_HASHES_pack3 = (current_dir + '\\hard_signatures\\SHA256-Hashes_pack3.txt')
 
 # define Stuff
-VERSION = "2.3"
+VERSION = "2.4"
 DEV     = "cookie0_o, Len-Stevens"
 
 # url´s
@@ -42,16 +43,19 @@ def SaveSettings(self):
     # get api keys
     api_key = self.VirusTotalApiKey.text()
     MetaDefenderApiKey = self.MetaDefenderApiKey.text()
-    # get VirusTotal scan checkbox status
+    # get VirusTotal scan checkbox status and meta defender scan checkbox status
     virus_total_scan = self.UseVirusTotalApiCheckBox.isChecked()
     meta_defender_scan = self.UseMetaDefenderApiCheckBox.isChecked()
     self.VirusTotalApiKey.setText(api_key)
-    self.MetaDefenderApiKey.text()
 
     config['-settings-']['VirusTotalScan'] = str(virus_total_scan)
     config['-settings-']['VirusTotalApiKey'] = str(api_key)
     config["-settings-"]["MetaDefenderScan"] = str(meta_defender_scan)
     config["-settings-"]["MetaDefenderApiKey"] = str(MetaDefenderApiKey)
+    if self.LightModeButton.text() == "Light Mode":
+        config["-settings-"]["Style"] = "Dark"
+    else:
+        config["-settings-"]["Style"] = "Light"
 
     with open(settings_file_path, 'w') as configfile: # save
         config.write(configfile)
@@ -131,10 +135,7 @@ def displayResults_CLEAN(self, file):
 def scan(file, self, MainWindow):
     try:
 
-        # change tab to loading tab
-        self.Tabs.setCurrentIndex(3)
-        
-
+    
         # default virus found to false
         virus_found = False
 
@@ -359,6 +360,10 @@ def scan(file, self, MainWindow):
 
 # BROWSE FILE
 def browseFiles(MainWindow, self):
+
+    # change tab to loading tab
+    self.Tabs.setCurrentIndex(3)
+
     # define thinker root
     root = Tk()
     # set ico
@@ -396,10 +401,10 @@ class Ui_MainWindow(object):
         icon = QtGui.QIcon()
         icon.addPixmap(QtGui.QPixmap(":/res/ico/AntiVirus_ico.svg"), QtGui.QIcon.Normal, QtGui.QIcon.Off)
         MainWindow.setWindowIcon(icon)
-        MainWindow.setStyleSheet("background-color: rgb(115, 115, 115);")
+        MainWindow.setStyleSheet("")
         self.SideBar = QtWidgets.QLabel(MainWindow)
-        self.SideBar.setGeometry(QtCore.QRect(0, 0, 51, 301))
-        self.SideBar.setStyleSheet("background-color: rgb(74, 74, 74);")
+        self.SideBar.setGeometry(QtCore.QRect(-10, 45, 61, 271))
+        self.SideBar.setStyleSheet("background-color: rgb(81, 89, 97);")
         self.SideBar.setText("")
         self.SideBar.setObjectName("SideBar")
         self.HomeTabButton = QtWidgets.QPushButton(MainWindow)
@@ -425,149 +430,101 @@ class Ui_MainWindow(object):
         self.SettingsTabButton.setObjectName("SettingsTabButton")
         self.Tabs = QtWidgets.QStackedWidget(MainWindow)
         self.Tabs.setGeometry(QtCore.QRect(50, 0, 591, 301))
+        font = QtGui.QFont()
+        font.setPointSize(10)
+        self.Tabs.setFont(font)
         self.Tabs.setStyleSheet("")
         self.Tabs.setObjectName("Tabs")
         self.HomeTab = QtWidgets.QWidget()
         self.HomeTab.setObjectName("HomeTab")
         self.HomeTitle = QtWidgets.QLabel(self.HomeTab)
-        self.HomeTitle.setGeometry(QtCore.QRect(0, 0, 541, 41))
+        self.HomeTitle.setGeometry(QtCore.QRect(0, 0, 551, 41))
         font = QtGui.QFont()
         font.setPointSize(23)
         self.HomeTitle.setFont(font)
-        self.HomeTitle.setStyleSheet("background-color: rgb(74, 74, 74);")
         self.HomeTitle.setAlignment(QtCore.Qt.AlignCenter)
         self.HomeTitle.setObjectName("HomeTitle")
         self.SelectFileButton = QtWidgets.QPushButton(self.HomeTab)
         self.SelectFileButton.setGeometry(QtCore.QRect(5, 45, 121, 31))
         font = QtGui.QFont()
-        font.setPointSize(20)
+        font.setPointSize(11)
         self.SelectFileButton.setFont(font)
-        self.SelectFileButton.setFlat(True)
+        self.SelectFileButton.setFlat(False)
         self.SelectFileButton.setObjectName("SelectFileButton")
-        self.Background_3 = QtWidgets.QLabel(self.HomeTab)
-        self.Background_3.setGeometry(QtCore.QRect(5, 45, 121, 31))
-        self.Background_3.setStyleSheet("background-color: rgb(74, 74, 74);")
-        self.Background_3.setText("")
-        self.Background_3.setObjectName("Background_3")
         self.ReportIssueButton = QtWidgets.QPushButton(self.HomeTab)
         self.ReportIssueButton.setGeometry(QtCore.QRect(5, 85, 121, 31))
         font = QtGui.QFont()
-        font.setPointSize(16)
+        font.setPointSize(11)
         self.ReportIssueButton.setFont(font)
-        self.ReportIssueButton.setFlat(True)
+        self.ReportIssueButton.setFlat(False)
         self.ReportIssueButton.setObjectName("ReportIssueButton")
-        self.Background_4 = QtWidgets.QLabel(self.HomeTab)
-        self.Background_4.setGeometry(QtCore.QRect(5, 85, 121, 31))
-        self.Background_4.setStyleSheet("background-color: rgb(74, 74, 74);")
-        self.Background_4.setText("")
-        self.Background_4.setObjectName("Background_4")
-        self.HomeTitle.raise_()
-        self.Background_3.raise_()
-        self.SelectFileButton.raise_()
-        self.Background_4.raise_()
-        self.ReportIssueButton.raise_()
         self.Tabs.addWidget(self.HomeTab)
         self.SettingsTab = QtWidgets.QWidget()
         self.SettingsTab.setObjectName("SettingsTab")
         self.SettingsTitle = QtWidgets.QLabel(self.SettingsTab)
-        self.SettingsTitle.setGeometry(QtCore.QRect(0, 0, 541, 41))
+        self.SettingsTitle.setGeometry(QtCore.QRect(0, 0, 551, 41))
         font = QtGui.QFont()
         font.setPointSize(23)
         self.SettingsTitle.setFont(font)
-        self.SettingsTitle.setStyleSheet("background-color: rgb(74, 74, 74);")
         self.SettingsTitle.setAlignment(QtCore.Qt.AlignCenter)
         self.SettingsTitle.setObjectName("SettingsTitle")
-        self.textBrowser = QtWidgets.QTextBrowser(self.SettingsTab)
-        self.textBrowser.setGeometry(QtCore.QRect(0, 275, 261, 41))
-        self.textBrowser.setFrameShape(QtWidgets.QFrame.NoFrame)
-        self.textBrowser.setOpenExternalLinks(True)
-        self.textBrowser.setObjectName("textBrowser")
         self.UseVirusTotalApiCheckBox = QtWidgets.QCheckBox(self.SettingsTab)
         self.UseVirusTotalApiCheckBox.setGeometry(QtCore.QRect(5, 45, 451, 17))
         font = QtGui.QFont()
         font.setPointSize(10)
         self.UseVirusTotalApiCheckBox.setFont(font)
-        self.UseVirusTotalApiCheckBox.setStyleSheet("QCheckBox::indicator {\n"
-"    background-color: rgb(65, 65, 65);\n"
-"}\n"
-"\n"
-"QCheckBox::indicator:checked {\n"
-"    image: url(:/res/Settings/check.svg);\n"
-"}")
         self.UseVirusTotalApiCheckBox.setObjectName("UseVirusTotalApiCheckBox")
         self.VirusTotalApiKey = QtWidgets.QLineEdit(self.SettingsTab)
         self.VirusTotalApiKey.setGeometry(QtCore.QRect(5, 65, 391, 20))
         font = QtGui.QFont()
         font.setPointSize(7)
         self.VirusTotalApiKey.setFont(font)
-        self.VirusTotalApiKey.setStyleSheet("background-color: rgb(65, 65, 65);\n"
-"\n"
-"border-width: 2px;\n"
-"border-radius: 10px;\n"
-"border-color: beige;")
+        self.VirusTotalApiKey.setStyleSheet("")
         self.VirusTotalApiKey.setInputMask("")
         self.VirusTotalApiKey.setText("")
         self.VirusTotalApiKey.setMaxLength(32767)
-        self.VirusTotalApiKey.setFrame(True)
+        self.VirusTotalApiKey.setFrame(False)
         self.VirusTotalApiKey.setEchoMode(QtWidgets.QLineEdit.Password)
         self.VirusTotalApiKey.setAlignment(QtCore.Qt.AlignCenter)
         self.VirusTotalApiKey.setObjectName("VirusTotalApiKey")
         self.SaveSettingsButton = QtWidgets.QPushButton(self.SettingsTab)
         self.SaveSettingsButton.setGeometry(QtCore.QRect(415, 265, 121, 31))
         font = QtGui.QFont()
-        font.setPointSize(16)
+        font.setPointSize(10)
         self.SaveSettingsButton.setFont(font)
-        self.SaveSettingsButton.setFlat(True)
+        self.SaveSettingsButton.setFlat(False)
         self.SaveSettingsButton.setObjectName("SaveSettingsButton")
-        self.Background_5 = QtWidgets.QLabel(self.SettingsTab)
-        self.Background_5.setGeometry(QtCore.QRect(415, 265, 121, 31))
-        self.Background_5.setStyleSheet("background-color: rgb(74, 74, 74);")
-        self.Background_5.setText("")
-        self.Background_5.setObjectName("Background_5")
         self.UseMetaDefenderApiCheckBox = QtWidgets.QCheckBox(self.SettingsTab)
         self.UseMetaDefenderApiCheckBox.setGeometry(QtCore.QRect(5, 90, 481, 17))
         font = QtGui.QFont()
         font.setPointSize(10)
         self.UseMetaDefenderApiCheckBox.setFont(font)
-        self.UseMetaDefenderApiCheckBox.setStyleSheet("QCheckBox::indicator {\n"
-"    background-color: rgb(65, 65, 65);\n"
-"}\n"
-"\n"
-"QCheckBox::indicator:checked {\n"
-"    image: url(:/res/Settings/check.svg);\n"
-"}")
         self.UseMetaDefenderApiCheckBox.setObjectName("UseMetaDefenderApiCheckBox")
         self.MetaDefenderApiKey = QtWidgets.QLineEdit(self.SettingsTab)
         self.MetaDefenderApiKey.setGeometry(QtCore.QRect(5, 110, 391, 20))
-        self.MetaDefenderApiKey.setStyleSheet("background-color: rgb(65, 65, 65);\n"
-"\n"
-"border-width: 2px;\n"
-"border-radius: 10px;\n"
-"border-color: beige;")
+        self.MetaDefenderApiKey.setStyleSheet("")
         self.MetaDefenderApiKey.setInputMask("")
         self.MetaDefenderApiKey.setText("")
         self.MetaDefenderApiKey.setMaxLength(32767)
-        self.MetaDefenderApiKey.setFrame(True)
+        self.MetaDefenderApiKey.setFrame(False)
         self.MetaDefenderApiKey.setEchoMode(QtWidgets.QLineEdit.Password)
         self.MetaDefenderApiKey.setAlignment(QtCore.Qt.AlignCenter)
         self.MetaDefenderApiKey.setObjectName("MetaDefenderApiKey")
-        self.Background_5.raise_()
-        self.SettingsTitle.raise_()
-        self.textBrowser.raise_()
-        self.UseVirusTotalApiCheckBox.raise_()
-        self.VirusTotalApiKey.raise_()
-        self.SaveSettingsButton.raise_()
-        self.UseMetaDefenderApiCheckBox.raise_()
-        self.MetaDefenderApiKey.raise_()
+        self.LightModeButton = QtWidgets.QPushButton(self.SettingsTab)
+        self.LightModeButton.setGeometry(QtCore.QRect(280, 265, 121, 31))
+        font = QtGui.QFont()
+        font.setPointSize(10)
+        self.LightModeButton.setFont(font)
+        self.LightModeButton.setFlat(False)
+        self.LightModeButton.setObjectName("LightModeButton")
         self.Tabs.addWidget(self.SettingsTab)
         self.VirusScanResults_hidden = QtWidgets.QWidget()
         self.VirusScanResults_hidden.setObjectName("VirusScanResults_hidden")
         self.VirusResultsTitle = QtWidgets.QLabel(self.VirusScanResults_hidden)
-        self.VirusResultsTitle.setGeometry(QtCore.QRect(0, 0, 541, 41))
+        self.VirusResultsTitle.setGeometry(QtCore.QRect(0, 0, 551, 41))
         font = QtGui.QFont()
         font.setPointSize(23)
         self.VirusResultsTitle.setFont(font)
-        self.VirusResultsTitle.setStyleSheet("background-color: rgb(74, 74, 74);")
         self.VirusResultsTitle.setAlignment(QtCore.Qt.AlignCenter)
         self.VirusResultsTitle.setObjectName("VirusResultsTitle")
         self.FileName = QtWidgets.QLabel(self.VirusScanResults_hidden)
@@ -605,31 +562,21 @@ class Ui_MainWindow(object):
         self.IsFileVirusY_N.setAlignment(QtCore.Qt.AlignCenter)
         self.IsFileVirusY_N.setObjectName("IsFileVirusY_N")
         self.ReturnToHomeTabButton = QtWidgets.QPushButton(self.VirusScanResults_hidden)
-        self.ReturnToHomeTabButton.setGeometry(QtCore.QRect(5, 264, 91, 31))
+        self.ReturnToHomeTabButton.setGeometry(QtCore.QRect(5, 265, 91, 31))
         font = QtGui.QFont()
-        font.setPointSize(15)
+        font.setPointSize(10)
         self.ReturnToHomeTabButton.setFont(font)
         self.ReturnToHomeTabButton.setDefault(False)
-        self.ReturnToHomeTabButton.setFlat(True)
+        self.ReturnToHomeTabButton.setFlat(False)
         self.ReturnToHomeTabButton.setObjectName("ReturnToHomeTabButton")
         self.DeleteFileButton = QtWidgets.QPushButton(self.VirusScanResults_hidden)
-        self.DeleteFileButton.setGeometry(QtCore.QRect(100, 265, 91, 31))
+        self.DeleteFileButton.setGeometry(QtCore.QRect(100, 265, 111, 31))
         font = QtGui.QFont()
-        font.setPointSize(14)
+        font.setPointSize(10)
         self.DeleteFileButton.setFont(font)
         self.DeleteFileButton.setDefault(False)
-        self.DeleteFileButton.setFlat(True)
+        self.DeleteFileButton.setFlat(False)
         self.DeleteFileButton.setObjectName("DeleteFileButton")
-        self.ButtonBackground = QtWidgets.QLabel(self.VirusScanResults_hidden)
-        self.ButtonBackground.setGeometry(QtCore.QRect(5, 264, 91, 31))
-        self.ButtonBackground.setStyleSheet("background-color: rgb(74, 74, 74);")
-        self.ButtonBackground.setText("")
-        self.ButtonBackground.setObjectName("ButtonBackground")
-        self.ButtonBackground_2 = QtWidgets.QLabel(self.VirusScanResults_hidden)
-        self.ButtonBackground_2.setGeometry(QtCore.QRect(100, 264, 91, 31))
-        self.ButtonBackground_2.setStyleSheet("background-color: rgb(74, 74, 74);")
-        self.ButtonBackground_2.setText("")
-        self.ButtonBackground_2.setObjectName("ButtonBackground_2")
         self.line = QtWidgets.QLabel(self.VirusScanResults_hidden)
         self.line.setGeometry(QtCore.QRect(0, 150, 540, 5))
         self.line.setStyleSheet("background-color: rgb(74, 74, 74);")
@@ -637,28 +584,28 @@ class Ui_MainWindow(object):
         self.line.setIndent(-1)
         self.line.setObjectName("line")
         self.VirusTotalWidget = QtWidgets.QWidget(self.VirusScanResults_hidden)
-        self.VirusTotalWidget.setGeometry(QtCore.QRect(120, 160, 181, 81))
+        self.VirusTotalWidget.setGeometry(QtCore.QRect(120, 160, 181, 71))
         self.VirusTotalWidget.setObjectName("VirusTotalWidget")
         self.label_3 = QtWidgets.QLabel(self.VirusTotalWidget)
-        self.label_3.setGeometry(QtCore.QRect(10, 10, 161, 21))
+        self.label_3.setGeometry(QtCore.QRect(10, 9, 161, 21))
         font = QtGui.QFont()
-        font.setPointSize(15)
+        font.setPointSize(9)
         self.label_3.setFont(font)
         self.label_3.setAlignment(QtCore.Qt.AlignHCenter|QtCore.Qt.AlignTop)
         self.label_3.setObjectName("label_3")
         self.DetectionsText = QtWidgets.QLabel(self.VirusTotalWidget)
-        self.DetectionsText.setGeometry(QtCore.QRect(10, 30, 161, 31))
+        self.DetectionsText.setGeometry(QtCore.QRect(10, 20, 161, 31))
         font = QtGui.QFont()
-        font.setPointSize(26)
+        font.setPointSize(9)
         font.setBold(True)
         font.setWeight(75)
         self.DetectionsText.setFont(font)
         self.DetectionsText.setAlignment(QtCore.Qt.AlignCenter)
         self.DetectionsText.setObjectName("DetectionsText")
         self.label_5 = QtWidgets.QLabel(self.VirusTotalWidget)
-        self.label_5.setGeometry(QtCore.QRect(10, 57, 161, 21))
+        self.label_5.setGeometry(QtCore.QRect(10, 47, 161, 16))
         font = QtGui.QFont()
-        font.setPointSize(10)
+        font.setPointSize(9)
         self.label_5.setFont(font)
         self.label_5.setAlignment(QtCore.Qt.AlignHCenter|QtCore.Qt.AlignTop)
         self.label_5.setObjectName("label_5")
@@ -666,26 +613,26 @@ class Ui_MainWindow(object):
         self.label_5.raise_()
         self.DetectionsText.raise_()
         self.MetaDefenderWidget = QtWidgets.QWidget(self.VirusScanResults_hidden)
-        self.MetaDefenderWidget.setGeometry(QtCore.QRect(310, 160, 221, 81))
+        self.MetaDefenderWidget.setGeometry(QtCore.QRect(310, 160, 221, 71))
         self.MetaDefenderWidget.setObjectName("MetaDefenderWidget")
         self.label_4 = QtWidgets.QLabel(self.MetaDefenderWidget)
-        self.label_4.setGeometry(QtCore.QRect(10, 10, 201, 21))
+        self.label_4.setGeometry(QtCore.QRect(10, 9, 201, 21))
         font = QtGui.QFont()
-        font.setPointSize(15)
+        font.setPointSize(9)
         self.label_4.setFont(font)
         self.label_4.setAlignment(QtCore.Qt.AlignHCenter|QtCore.Qt.AlignTop)
         self.label_4.setObjectName("label_4")
         self.MetaDefenderDetectionsText = QtWidgets.QLabel(self.MetaDefenderWidget)
-        self.MetaDefenderDetectionsText.setGeometry(QtCore.QRect(10, 30, 201, 31))
+        self.MetaDefenderDetectionsText.setGeometry(QtCore.QRect(10, 20, 201, 31))
         font = QtGui.QFont()
-        font.setPointSize(26)
+        font.setPointSize(9)
         font.setBold(True)
         font.setWeight(75)
         self.MetaDefenderDetectionsText.setFont(font)
         self.MetaDefenderDetectionsText.setAlignment(QtCore.Qt.AlignCenter)
         self.MetaDefenderDetectionsText.setObjectName("MetaDefenderDetectionsText")
         self.label_6 = QtWidgets.QLabel(self.MetaDefenderWidget)
-        self.label_6.setGeometry(QtCore.QRect(10, 57, 201, 21))
+        self.label_6.setGeometry(QtCore.QRect(10, 47, 201, 21))
         font = QtGui.QFont()
         font.setPointSize(10)
         self.label_6.setFont(font)
@@ -694,44 +641,45 @@ class Ui_MainWindow(object):
         self.label_4.raise_()
         self.label_6.raise_()
         self.MetaDefenderDetectionsText.raise_()
-        self.VirusResultsTitle.raise_()
-        self.FileName.raise_()
-        self.FilePath.raise_()
-        self.FileHash.raise_()
-        self.label.raise_()
-        self.IsFileVirusY_N.raise_()
-        self.ButtonBackground.raise_()
-        self.ReturnToHomeTabButton.raise_()
-        self.ButtonBackground_2.raise_()
-        self.DeleteFileButton.raise_()
-        self.line.raise_()
-        self.VirusTotalWidget.raise_()
-        self.MetaDefenderWidget.raise_()
         self.Tabs.addWidget(self.VirusScanResults_hidden)
         self.LoadingPage = QtWidgets.QWidget()
         self.LoadingPage.setObjectName("LoadingPage")
         self.LoadingPageTitle = QtWidgets.QLabel(self.LoadingPage)
-        self.LoadingPageTitle.setGeometry(QtCore.QRect(0, 0, 541, 41))
+        self.LoadingPageTitle.setGeometry(QtCore.QRect(-10, 0, 561, 41))
         font = QtGui.QFont()
         font.setPointSize(23)
         self.LoadingPageTitle.setFont(font)
-        self.LoadingPageTitle.setStyleSheet("background-color: rgb(74, 74, 74);")
         self.LoadingPageTitle.setAlignment(QtCore.Qt.AlignCenter)
         self.LoadingPageTitle.setObjectName("LoadingPageTitle")
-        self.loading_video_lable = QtWidgets.QLabel(self.LoadingPage)
-        self.loading_video_lable.setGeometry(QtCore.QRect(5, 45, 531, 251))
-        self.loading_video_lable.setText("")
-        self.loading_video_lable.setObjectName("loading_video_lable")
+        self.label_7 = QtWidgets.QLabel(self.LoadingPage)
+        self.label_7.setGeometry(QtCore.QRect(0, 0, 541, 301))
+        font = QtGui.QFont()
+        font.setPointSize(60)
+        font.setBold(True)
+        font.setWeight(75)
+        self.label_7.setFont(font)
+        self.label_7.setAlignment(QtCore.Qt.AlignCenter)
+        self.label_7.setObjectName("label_7")
+        self.label_7.raise_()
+        self.LoadingPageTitle.raise_()
         self.Tabs.addWidget(self.LoadingPage)
         self.version_display = QtWidgets.QLabel(MainWindow)
         self.version_display.setGeometry(QtCore.QRect(1, 284, 47, 20))
         self.version_display.setStyleSheet("background-color: qradialgradient(spread:pad, cx:0.5, cy:0.5, radius:0.5, fx:0.1468, fy:0.1468, stop:1 rgba(0, 0, 0, 0));")
         self.version_display.setObjectName("version_display")
-        self.label_2 = QtWidgets.QLabel(MainWindow)
-        self.label_2.setGeometry(QtCore.QRect(-10, 41, 61, 4))
-        self.label_2.setText("")
-        self.label_2.setObjectName("label_2")
-
+        self.SideBar_2 = QtWidgets.QLabel(MainWindow)
+        self.SideBar_2.setGeometry(QtCore.QRect(-10, -10, 71, 51))
+        self.SideBar_2.setText("")
+        self.SideBar_2.setObjectName("SideBar_2")
+        self.CurrentTabHome = QtWidgets.QLabel(MainWindow)
+        self.CurrentTabHome.setGeometry(QtCore.QRect(0, 50, 3, 31))
+        self.CurrentTabHome.setText("")
+        self.CurrentTabHome.setObjectName("CurrentTabHome")
+        self.CurrentTabSettings = QtWidgets.QLabel(MainWindow)
+        self.CurrentTabSettings.setGeometry(QtCore.QRect(0, 90, 3, 31))
+        self.CurrentTabSettings.setText("")
+        self.CurrentTabSettings.setObjectName("CurrentTabSettings")
+        #
         self.Tabs.setCurrentIndex(0)
         self.retranslateUi(MainWindow)
         QtCore.QMetaObject.connectSlotsByName(MainWindow)
@@ -741,6 +689,92 @@ class Ui_MainWindow(object):
         api_key = config.get('-settings-', 'VirusTotalApiKey')
         MetaDefenderScan = config.get('-settings-', 'MetaDefenderScan')
         MetaDefenderApiKey = config.get('-settings-', 'MetaDefenderApiKey')
+        style = config.get('-settings-', 'Style')
+
+
+        # apply dark default theme
+        from qt_material import apply_stylesheet
+        extra = {
+    
+            # Density Scale
+            'density_scale': '-2',
+        }
+        objects = [
+            # buttons
+            self.SelectFileButton,
+            self.ReportIssueButton,
+            self.LightModeButton,
+            self.SaveSettingsButton,
+            self.LightModeButton,
+            self.ReturnToHomeTabButton,
+            self.DeleteFileButton,
+            # line edits
+            self.MetaDefenderApiKey,
+            self.VirusTotalApiKey,
+            # check boxes
+            self.UseVirusTotalApiCheckBox,
+            self.UseMetaDefenderApiCheckBox,
+            # background
+            MainWindow,
+            # labels
+        ]
+
+        # apply stylesheet in settings
+
+        for object in objects:
+            if style == "Dark":
+                apply_stylesheet(object, theme=f'{current_dir}\\res\\themes\\dark_red.xml', extra=extra)
+                self.SideBar.setStyleSheet("background-color: rgb(81, 89, 97);")
+                self.SideBar_2.setStyleSheet("background-color: rgb(81, 89, 97);")
+                self.HomeTitle.setStyleSheet("background-color: rgb(81, 89, 97);")
+                self.SettingsTitle.setStyleSheet("background-color: rgb(81, 89, 97);")
+                self.VirusResultsTitle.setStyleSheet("background-color: rgb(81, 89, 97);")
+                self.LoadingPageTitle.setStyleSheet("background-color: rgb(81, 89, 97);")
+                self.LightModeButton.setText("Light Mode")
+            if style == "Light":
+                apply_stylesheet(object, theme=f'{current_dir}\\res\\themes\\light_pink.xml', extra=extra)
+                self.SideBar.setStyleSheet("background-color: rgb(182, 182, 182);")
+                self.SideBar_2.setStyleSheet("background-color: rgb(182, 182, 182);")
+                self.HomeTitle.setStyleSheet("background-color: rgb(182, 182, 182);")
+                self.SettingsTitle.setStyleSheet("background-color: rgb(182, 182, 182);")
+                self.VirusResultsTitle.setStyleSheet("background-color: rgb(182, 182, 182);")
+                self.LoadingPageTitle.setStyleSheet("background-color: rgb(182, 182, 182);")
+                self.LightModeButton.setText("Dark Mode")
+
+
+        # if lightmode is enabled, apply light theme and change button text 
+        def style_mode(self):
+            if self.LightModeButton.text() == "Light Mode":
+                for object in objects:
+                    apply_stylesheet(object, theme=f'{current_dir}\\res\\themes\\light_pink.xml', extra=extra)
+                    self.CurrentTabHome.setStyleSheet("background-color: rgb(182, 182, 182);")
+                    self.CurrentTabSettings.setStyleSheet("background-color: rgb(255, 0, 0);")
+                    self.SideBar.setStyleSheet("background-color: rgb(182, 182, 182);")
+                    self.SideBar_2.setStyleSheet("background-color: rgb(182, 182, 182);")
+                    self.CurrentTabHome.setStyleSheet("background-color: rgb(182, 182, 182);")
+                    self.CurrentTabSettings.setStyleSheet("background-color: rgb(231, 84, 128);")
+                    # set title backgrounds
+                    self.HomeTitle.setStyleSheet("background-color: rgb(182, 182, 182);")
+                    self.SettingsTitle.setStyleSheet("background-color: rgb(182, 182, 182);")
+                    self.VirusResultsTitle.setStyleSheet("background-color: rgb(182, 182, 182);")
+                    self.LoadingPageTitle.setStyleSheet("background-color: rgb(182, 182, 182);")
+                self.LightModeButton.setText("Dark Mode")
+            else:
+                for object in objects:
+                    apply_stylesheet(object, theme=f'{current_dir}\\res\\themes\\dark_red.xml', extra=extra)
+                    self.CurrentTabHome.setStyleSheet("background-color: rgb(81, 89, 97);")
+                    self.CurrentTabSettings.setStyleSheet("background-color: rgb(255,192,203);")
+                    self.SideBar.setStyleSheet("background-color: rgb(81, 89, 97);")
+                    self.SideBar_2.setStyleSheet("background-color: rgb(81, 89, 97);")
+                    self.CurrentTabHome.setStyleSheet("background-color: rgb(81, 89, 97);")
+                    self.CurrentTabSettings.setStyleSheet("background-color: rgb(255, 0, 0);")
+                    # set title backgrounds
+                    self.HomeTitle.setStyleSheet("background-color: rgb(81, 89, 97);")
+                    self.SettingsTitle.setStyleSheet("background-color: rgb(81, 89, 97);")
+                    self.VirusResultsTitle.setStyleSheet("background-color: rgb(81, 89, 97);")
+                    self.LoadingPageTitle.setStyleSheet("background-color: rgb(81, 89, 97);")
+                self.LightModeButton.setText("Light Mode")
+            
 
         if VirustotalScan == 'True':
             self.UseVirusTotalApiCheckBox.setChecked(True)
@@ -754,11 +788,41 @@ class Ui_MainWindow(object):
             self.UseMetaDefenderApiCheckBox.setChecked(False)
         self.MetaDefenderApiKey.setText(MetaDefenderApiKey)
 
+        def change_tab_settings(self):
+            self.Tabs.setCurrentIndex(0)
+            self.HomeTabButton.setStyleSheet("image: url(:/res/SideBar/home.svg);\n")
+            self.SettingsTabButton.setStyleSheet("image: url(:/res/SideBar/settings.svg);\n")
+            if self.LightModeButton.text() == "Light Mode":
+                self.CurrentTabSettings.setStyleSheet("background-color: rgb(81, 89, 97);")
+                self.CurrentTabHome.setStyleSheet("background-color: rgb(255, 0, 0);")
+            else:
+                # light mode
+                self.CurrentTabSettings.setStyleSheet("background-color: rgb(182, 182, 182);")
+                self.CurrentTabHome.setStyleSheet("background-color: rgb(231, 84, 128);")
+                
+
+
+            return
+
+        def change_tab_home(self):
+            self.Tabs.setCurrentIndex(1)
+            self.SettingsTabButton.setStyleSheet("image: url(:/res/SideBar/settings.svg);\n")
+            self.HomeTabButton.setStyleSheet("image: url(:/res/SideBar/home.svg);\n")
+            if self.LightModeButton.text() == "Light Mode":
+                self.CurrentTabSettings.setStyleSheet("background-color: rgb(255, 0, 0);")
+                self.CurrentTabHome.setStyleSheet("background-color: rgb(81, 89, 97);")
+            else:
+                # light mode
+                self.CurrentTabSettings.setStyleSheet("background-color: rgb(231, 84, 128);")
+                self.CurrentTabHome.setStyleSheet("background-color: rgb(182, 182, 182);")
+                
+            return	
 
 
         # change tabs buttons
-        self.HomeTabButton.clicked.connect(lambda: self.Tabs.setCurrentIndex(0))
-        self.SettingsTabButton.clicked.connect(lambda: self.Tabs.setCurrentIndex(1))
+        self.HomeTabButton.clicked.connect(lambda: change_tab_settings(self))
+
+        self.SettingsTabButton.clicked.connect(lambda: change_tab_home(self))
 
         # report issue button
         self.ReportIssueButton.clicked.connect(lambda: webbrowser.open_new(Report_issues))
@@ -769,6 +833,9 @@ class Ui_MainWindow(object):
         # save settings button
         self.SaveSettingsButton.clicked.connect(lambda: SaveSettings(self))
 
+        # style mode button
+        self.LightModeButton.clicked.connect(lambda: style_mode(self))
+
 
     def retranslateUi(self, MainWindow):
         _translate = QtCore.QCoreApplication.translate
@@ -777,11 +844,6 @@ class Ui_MainWindow(object):
         self.SelectFileButton.setText(_translate("MainWindow", "Scan File"))
         self.ReportIssueButton.setText(_translate("MainWindow", "report issue"))
         self.SettingsTitle.setText(_translate("MainWindow", "Settings"))
-        self.textBrowser.setHtml(_translate("MainWindow", "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.0//EN\" \"http://www.w3.org/TR/REC-html40/strict.dtd\">\n"
-"<html><head><meta name=\"qrichtext\" content=\"1\" /><style type=\"text/css\">\n"
-"p, li { white-space: pre-wrap; }\n"
-"</style></head><body style=\" font-family:\'MS Shell Dlg 2\'; font-size:8.25pt; font-weight:400; font-style:normal;\">\n"
-"<p style=\" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\"><a href=\"https://github.com/cookie0o/Python-Antivirus-beta-ui/discussions/1\"><span style=\" font-size:10pt; font-weight:600; text-decoration: underline; color:#000000;\">Report Virus Hashes</span></a><a href=\"https://github.com/cookie0o/Python-Antivirus-beta-ui/discussions/1\"><span style=\" font-size:10pt; text-decoration: underline; color:#0000ff;\"> here!</span></a></p></body></html>"))
         self.UseVirusTotalApiCheckBox.setText(_translate("MainWindow", "Use Virus Total api (only files under 32MB) (files will be uploaded publicly)"))
         self.VirusTotalApiKey.setPlaceholderText(_translate("MainWindow", "Enter your Virus Total api Key here"))
         self.SaveSettingsButton.setText(_translate("MainWindow", "Safe config"))
@@ -796,11 +858,13 @@ class Ui_MainWindow(object):
         self.ReturnToHomeTabButton.setText(_translate("MainWindow", "Return"))
         self.DeleteFileButton.setText(_translate("MainWindow", "Delete File"))
         self.label_3.setText(_translate("MainWindow", "Virus Total score"))
-        self.DetectionsText.setText(_translate("MainWindow", "-"))
+        self.DetectionsText.setText(_translate("MainWindow", "0 | 0"))
         self.label_5.setText(_translate("MainWindow", "Detections"))
         self.label_4.setText(_translate("MainWindow", "Meta Defender score"))
-        self.MetaDefenderDetectionsText.setText(_translate("MainWindow", "-"))
+        self.MetaDefenderDetectionsText.setText(_translate("MainWindow", "0 | 0"))
         self.label_6.setText(_translate("MainWindow", "Detections"))
+        self.LoadingPageTitle.setText(_translate("MainWindow", "..."))
+        self.label_7.setText(_translate("MainWindow", "loading..."))
         self.version_display.setText(_translate("MainWindow", f"v{VERSION}"))
 # import resources
 import res.res_rc
@@ -818,4 +882,3 @@ if __name__ == "__main__":
     ui.setupUi(MainWindow)
     MainWindow.show()
     sys.exit(app.exec_())
-
