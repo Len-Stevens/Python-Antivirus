@@ -6,7 +6,7 @@ Thank You! :)
 ## NOTE:
 when you install qt-material pls go to;
 `you_Python_dir\Lib\site-packages\qt_material`
-and replace `material.css.template` with [this-File](https://anonfiles.com/b4R2X6g1y0/material.css_template) (else Gui will be broken!)
+and replace `material.css.template` with this [File!](https://anonfiles.com/b4R2X6g1y0/material.css_template) (else Gui will be broken!)
 
 # Gui
 ## Dark mode
