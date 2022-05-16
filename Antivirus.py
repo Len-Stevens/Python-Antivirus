@@ -33,8 +33,8 @@ VERSION = "2.4"
 DEV     = "cookie0_o, Len-Stevens"
 
 # url´s
-Report_issues = "https://github.com/cookie0o/Python-Antivirus-beta-ui/issues/new"
-Submit_sample = "https://github.com/cookie0o/Python-Antivirus-beta-ui/discussions/1"
+Report_issues = "https://github.com/Len-Stevens/Python-Antivirus/issues/new"
+Submit_sample = "https://github.com/Len-Stevens/Python-Antivirus/discussions/8"
 virus_total_api = "https://www.virustotal.com/api/v3/files/report"
 meta_defender_api = "https://api.metadefender.com/v4/hash/" # + hash
 
