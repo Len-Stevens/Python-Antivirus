@@ -1,9 +1,7 @@
 # imports
+from fileinput import filename
 from PyQt5 import QtCore, QtGui, QtWidgets
 from virustotal_python import Virustotal
-from tkinter import filedialog
-from tkinter import messagebox
-from tkinter import *
 import configparser
 import webbrowser
 import requests
@@ -29,7 +27,7 @@ SHA256_HASHES_pack2 = (current_dir + '\\hard_signatures\\SHA256-Hashes_pack2.txt
 SHA256_HASHES_pack3 = (current_dir + '\\hard_signatures\\SHA256-Hashes_pack3.txt')
 
 # define Stuff
-VERSION = "2.4"
+VERSION = "2.5"
 DEV     = "cookie0_o, Len-Stevens"
 
 # url´s
@@ -62,28 +60,39 @@ def SaveSettings(self):
 
     return
 
+# removed thinker from project.
+# program will now check if system is Win or Linux (if OS is Linux .ico files will not be used)
     
 # remove file
 def removeFile(file):
-        # define thinker root again AGAIN since it was destroyed 3 times now xD
-        root = Tk()
-        # set ico
-        root.iconbitmap(current_dir + '\\res\\ico\\AntiVirus_ico.ico')
-        # set size
-        root.geometry("0x0")
-        
         try:
             os.remove(file)
         except:
-            response=messagebox.showinfo("Error", "File could not be deleted.")
-            # close thinker window when ok is clicked
-            if response:
-                root.destroy()
+            # file coudn't be deleted = show error message
+            msgBox = QtWidgets.QMessageBox()
+            msgBox.setIcon(QtWidgets.QMessageBox.Critical)
+            msgBox.setText("Error")
+            msgBox.setInformativeText(f"""\
+File couldn't be deleted.
+File: {file}"
+            """)
+            # remove window title bar
+            msgBox.setWindowFlags(QtCore.Qt.WindowStaysOnTopHint)
+            msgBox.setWindowFlags(QtCore.Qt.FramelessWindowHint)
+            msgBox.exec_()
         finally:
-            response=messagebox.showinfo("Info", "File successfully deleted.")
-            # close thinker window when ok is clicked
-            if response:
-                root.destroy()
+            # file deleted = show success message
+            msgBox = QtWidgets.QMessageBox()
+            msgBox.setIcon(QtWidgets.QMessageBox.Information)
+            msgBox.setText("Info")
+            msgBox.setInformativeText(f"""\
+File successfully deleted.
+File: {file}"
+            """)
+            # remove window title bar
+            msgBox.setWindowFlags(QtCore.Qt.WindowStaysOnTopHint)
+            msgBox.setWindowFlags(QtCore.Qt.FramelessWindowHint)
+            msgBox.exec_()
 
 
 # display results
@@ -193,17 +202,16 @@ def scan(file, self, MainWindow):
                 api_key = self.VirusTotalApiKey.text()
                 # check if api key is empty if yes then show error
                 if api_key == "":
-                    # define thinker root again (this is getting old) since it was destroyed
-                    root = Tk()
-                    # set ico
-                    root.iconbitmap(current_dir + '\\res\\ico\\AntiVirus_ico.ico')
-                    # set size
-                    root.geometry("0x0")
-                    # display error
-                    response=messagebox.showinfo("Error", "Please enter a valid Virus Total API key.")
-                    # close thinker window when ok is clicked
-                    if response:
-                        root.destroy()
+                    msgBox = QtWidgets.QMessageBox()
+                    msgBox.setIcon(QtWidgets.QMessageBox.Critical)
+                    msgBox.setText("Error")
+                    msgBox.setInformativeText(f"""\
+Please enter a valid Virus Total API key.
+                    """)
+                    # remove window title bar
+                    msgBox.setWindowFlags(QtCore.Qt.WindowStaysOnTopHint)
+                    msgBox.setWindowFlags(QtCore.Qt.FramelessWindowHint)
+                    msgBox.exec_()
                 # if api key is not empty then scan the file
                 else:
                     # Create dictionary containing the file to send for multipart encoding upload
@@ -239,21 +247,19 @@ def scan(file, self, MainWindow):
                             displayResults_VIRUS(self, file)
             else:
                 pass
+        
+        # show error when virus total api was not able to scan the file
         except:
-            # define thinker root again (this is getting very old) since it was destroyed
-            root = Tk()
-            # set ico
-            root.iconbitmap(current_dir + '\\res\\ico\\AntiVirus_ico.ico')
-            # set size
-            root.geometry("0x0")
-            # display error
-            response=messagebox.showinfo("Error", "Cant scan file with Virus Total.")
-            # hide Virus Total results
-            self.VirusTotalWidget.hide()
-            # close thinker window when ok is clicked
-            if response:
-                root.destroy()
-                pass
+            msgBox = QtWidgets.QMessageBox()
+            msgBox.setIcon(QtWidgets.QMessageBox.Critical)
+            msgBox.setText("Error")
+            msgBox.setInformativeText(f"""\
+Cant scan file with Virus Total.
+            """)
+            # remove window title bar
+            msgBox.setWindowFlags(QtCore.Qt.WindowStaysOnTopHint)
+            msgBox.setWindowFlags(QtCore.Qt.FramelessWindowHint)
+            msgBox.exec_()
 
         try:
             # Meta Defender hash check
@@ -262,17 +268,16 @@ def scan(file, self, MainWindow):
                 MetaDefenderApiKey = self.MetaDefenderApiKey.text()
                 # check if api key is empty if yes then show error
                 if MetaDefenderApiKey == "":
-                    # define thinker root again (this is getting very old) since it was destroyed
-                    root = Tk()
-                    # set ico
-                    root.iconbitmap(current_dir + '\\res\\ico\\AntiVirus_ico.ico')
-                    # set size
-                    root.geometry("0x0")
-                    # display error
-                    response=messagebox.showinfo("Error", "Please enter a valid Meta Defender API key.")
-                    # close thinker window when ok is clicked
-                    if response:
-                        root.destroy()
+                    msgBox = QtWidgets.QMessageBox()
+                    msgBox.setIcon(QtWidgets.QMessageBox.Critical)
+                    msgBox.setText("Error")
+                    msgBox.setInformativeText(f"""\
+Please enter a valid Meta Defender API key.
+                    """)
+                    # remove window title bar
+                    msgBox.setWindowFlags(QtCore.Qt.WindowStaysOnTopHint)
+                    msgBox.setWindowFlags(QtCore.Qt.FramelessWindowHint)
+                    msgBox.exec_()
                 # if api key is not empty then scan the hash of the file
                 else:
                     M_header=({"apikey": MetaDefenderApiKey})
@@ -310,21 +315,19 @@ def scan(file, self, MainWindow):
                     displayResults_VIRUS(self, file)
                 else:
                     displayResults_CLEAN(self, file)
+        # show error when Meta Defender api was not able to scan the file
         except:
-            # define thinker root again (this is getting very old) since it was destroyed
-            root = Tk()
-            # set ico
-            root.iconbitmap(current_dir + '\\res\\ico\\AntiVirus_ico.ico')
-            # set size
-            root.geometry("0x0")
-            # display error
-            response=messagebox.showinfo("Error", "Cant scan file with Meta Defender.")
-            # hide meta defender results
-            self.MetaDefenderWidget.hide()
-            # close thinker window when ok is clicked
-            if response:
-                root.destroy()
-                pass
+            msgBox = QtWidgets.QMessageBox()
+            msgBox.setIcon(QtWidgets.QMessageBox.Critical)
+            msgBox.setText("Error")
+            msgBox.setInformativeText(f"""\
+Cant scan file with Meta Defender.
+            """)
+            # remove window title bar
+            msgBox.setWindowFlags(QtCore.Qt.WindowStaysOnTopHint)
+            msgBox.setWindowFlags(QtCore.Qt.FramelessWindowHint)
+            msgBox.exec_()
+
         
         finally:
             # goto hidden results tab
@@ -340,22 +343,18 @@ def scan(file, self, MainWindow):
         # change tab to home tab
         self.Tabs.setCurrentIndex(0)
 
-        # define thinker root again since it was destroyed
-        root = Tk()
-        # set ico
-        root.iconbitmap(current_dir + '\\res\\ico\\AntiVirus_ico.ico')
-        # set size
-        root.geometry("0x0")
-
-        # show error message
-        response=messagebox.showinfo("Error", "No file selected or \nProgram has no permission to access file.")
-        # close thinker window when ok is clicked
-        if response:
-            root.destroy()
-
+        msgBox = QtWidgets.QMessageBox()
+        msgBox.setIcon(QtWidgets.QMessageBox.Critical)
+        msgBox.setText("Error")
+        msgBox.setInformativeText(f"""\
+No file selected or \nProgram has no permission to access file.
+        """)
+        # remove window title bar
+        msgBox.setWindowFlags(QtCore.Qt.WindowStaysOnTopHint)
+        msgBox.setWindowFlags(QtCore.Qt.FramelessWindowHint)
+        msgBox.exec_()
     finally:
         return
-
 
 
 # BROWSE FILE
@@ -364,23 +363,16 @@ def browseFiles(MainWindow, self):
     # change tab to loading tab
     self.Tabs.setCurrentIndex(3)
 
-    # define thinker root
-    root = Tk()
-    # set ico
-    root.iconbitmap(current_dir + '\\res\\ico\\AntiVirus_ico.ico')
-    # set size
-    root.geometry("0x0")
+    filepath_raw, filename_raw = os.path.split(str(QtWidgets.QFileDialog.getOpenFileName(MainWindow,
+                                                                    "Select File",
+                                                                    "YOUR-FILE-PATH")))
+    
+    filepath_raw = filepath_raw.replace("('", "")
+    filename = filename_raw.replace("', 'All Files (*)')", "")
 
-    filepath_raw, filename = os.path.split(filedialog.askopenfilename(initialdir = "/", 
-                                          title = "Select a File", 
-                                          filetypes = (("Text files", 
-                                                        "*.*"), 
-                                                       ("all files", 
-                                                        "*.*"))))
     # display file name
     self.FileName.setText("File Name: " + filename)
     # close thinker window
-    root.destroy()
     
     # get full path to file
     filepath = (filepath_raw + "/" + filename)
@@ -398,9 +390,13 @@ class Ui_MainWindow(object):
         MainWindow.resize(590, 300)
         MainWindow.setMinimumSize(QtCore.QSize(590, 300))
         MainWindow.setMaximumSize(QtCore.QSize(590, 300))
-        icon = QtGui.QIcon()
-        icon.addPixmap(QtGui.QPixmap(":/res/ico/AntiVirus_ico.svg"), QtGui.QIcon.Normal, QtGui.QIcon.Off)
-        MainWindow.setWindowIcon(icon)
+        if sys.platform == "win32":
+            icon = QtGui.QIcon()
+            icon.addPixmap(QtGui.QPixmap(":/res/ico/AntiVirus_ico.svg"), QtGui.QIcon.Normal, QtGui.QIcon.Off)
+            MainWindow.setWindowIcon(icon)
+        # OS is not windows so don´t show icon since its a .ico file
+        else:
+            pass
         MainWindow.setStyleSheet("")
         self.SideBar = QtWidgets.QLabel(MainWindow)
         self.SideBar.setGeometry(QtCore.QRect(-10, 45, 61, 271))
