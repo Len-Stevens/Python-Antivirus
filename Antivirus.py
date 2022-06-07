@@ -1,5 +1,6 @@
 # imports
 from fileinput import filename
+from re import template
 from PyQt5 import QtCore, QtGui, QtWidgets
 from virustotal_python import Virustotal
 import configparser
@@ -11,30 +12,51 @@ import os
 
 
 # get current directory
-current_dir = os.path.dirname(__file__)
+current_dir         = (os.path.dirname(__file__))
 
 # settings.ini file path
-settings_file_path = current_dir + '/settings/settings.ini'
-
-
-# define config
-config = configparser.ConfigParser()
-config.read(settings_file_path)
+settings_file_path  = (current_dir + '\\settings\\settings.ini')
 
 # get files with Virus hashes inside
 SHA256_HASHES_pack1 = (current_dir + '\\hard_signatures\\SHA256-Hashes_pack1.txt')
 SHA256_HASHES_pack2 = (current_dir + '\\hard_signatures\\SHA256-Hashes_pack2.txt')
 SHA256_HASHES_pack3 = (current_dir + '\\hard_signatures\\SHA256-Hashes_pack3.txt')
 
+# get log file
+LOG_file            = (current_dir + '\\logs\\log.txt')
+
 # define Stuff
-VERSION = "2.5"
-DEV     = "cookie0_o, Len-Stevens"
+VERSION             = "2.6"
+DEV                 = "cookie0_o, Len-Stevens"
 
 # url´s
-Report_issues = "https://github.com/cookie0o/Python-Antivirus-beta-ui/issues/new"
-Submit_sample = "https://github.com/cookie0o/Python-Antivirus-beta-ui/discussions/1"
-virus_total_api = "https://www.virustotal.com/api/v3/files/report"
-meta_defender_api = "https://api.metadefender.com/v4/hash/" # + hash
+Report_issues       = "https://github.com/Len-Stevens/Python-Antivirus/issues/new"
+Submit_sample       = "https://github.com/Len-Stevens/Python-Antivirus/discussions/8"
+virus_total_api     = "https://www.virustotal.com/api/v3/files/report"
+meta_defender_api   = "https://api.metadefender.com/v4/hash/" # + hash
+
+Title_template      = f"""\
+                      PY-Antivirus [v{VERSION}]
+                  DEV: {DEV} 
+##############################LOGS##############################\n"""
+
+# define config
+config = configparser.ConfigParser()
+config.read(settings_file_path)
+
+
+
+# clear log file
+with open(LOG_file, 'r+') as f:
+    f.truncate(0)
+    f.close()
+
+# open log file
+with open(LOG_file, "w") as log_file:
+    log_file
+    # write log file template
+    log_file.write(Title_template)
+
 
 # save settings to settings/settings.ini
 def SaveSettings(self):
@@ -60,14 +82,20 @@ def SaveSettings(self):
 
     return
 
-# removed thinker from project.
-# program will now check if system is Win or Linux (if OS is Linux .ico files will not be used)
     
 # remove file
 def removeFile(file):
         try:
             os.remove(file)
-        except:
+        except Exception as e:
+            # open log file
+            with open(LOG_file, "w") as log_file:
+                log_file.write(Title_template)
+                # write error to log file
+                log_file.write("-ERROR ;\n")
+                log_file.write(str(e)+ "\n")
+                log_file.close()
+
             # file coudn't be deleted = show error message
             msgBox = QtWidgets.QMessageBox()
             msgBox.setIcon(QtWidgets.QMessageBox.Critical)
@@ -143,8 +171,6 @@ def displayResults_CLEAN(self, file):
 
 def scan(file, self, MainWindow):
     try:
-
-    
         # default virus found to false
         virus_found = False
 
@@ -249,7 +275,20 @@ Please enter a valid Virus Total API key.
                 pass
         
         # show error when virus total api was not able to scan the file
-        except:
+        except Exception as e:
+            # set results to ERROR
+            self.DetectionsText.setStyleSheet("color: red")
+            self.DetectionsText.setText("ERROR")
+
+            # open log file
+            with open(LOG_file, "w") as log_file:
+                log_file.write(Title_template)
+                # write log
+                log_file.write(f"-ERROR ;\n")
+                log_file.write(str(e)+ "\n")
+                log_file.close()
+
+            # show error box
             msgBox = QtWidgets.QMessageBox()
             msgBox.setIcon(QtWidgets.QMessageBox.Critical)
             msgBox.setText("Error")
@@ -316,7 +355,20 @@ Please enter a valid Meta Defender API key.
                 else:
                     displayResults_CLEAN(self, file)
         # show error when Meta Defender api was not able to scan the file
-        except:
+        except Exception as e:
+            # set results to ERROR
+            self.MetaDefenderDetectionsText.setStyleSheet("color: red")
+            self.MetaDefenderDetectionsText.setText("ERROR")
+
+            # open log file
+            with open(LOG_file, "w") as log_file:
+                log_file.write(Title_template)
+                # write log
+                log_file.write(f"-ERROR ;\n")
+                log_file.write(str(e)+ "\n")
+                log_file.close()
+                
+            # show error box
             msgBox = QtWidgets.QMessageBox()
             msgBox.setIcon(QtWidgets.QMessageBox.Critical)
             msgBox.setText("Error")
@@ -339,15 +391,23 @@ Cant scan file with Meta Defender.
             self.ReturnToHomeTabButton.clicked.connect(lambda: self.Tabs.setCurrentIndex(0))
 
 
-    except:
+    except Exception as e:
         # change tab to home tab
         self.Tabs.setCurrentIndex(0)
+        
+        # open log file
+        with open(LOG_file, "w") as log_file:
+            log_file.write(Title_template)
+            # print error to log
+            log_file.write("-ERROR ;\n")
+            log_file.write(str(e)+ "\n")
 
+        # show error message
         msgBox = QtWidgets.QMessageBox()
         msgBox.setIcon(QtWidgets.QMessageBox.Critical)
         msgBox.setText("Error")
         msgBox.setInformativeText(f"""\
-No file selected or \nProgram has no permission to access file.
+No file selected or \nProgram has no permission to access file.\nOr error while scanning file.
         """)
         # remove window title bar
         msgBox.setWindowFlags(QtCore.Qt.WindowStaysOnTopHint)
@@ -719,7 +779,10 @@ class Ui_MainWindow(object):
 
         for object in objects:
             if style == "Dark":
-                apply_stylesheet(object, theme=f'{current_dir}\\res\\themes\\dark_red.xml', extra=extra)
+                if sys.platform.startswith('win'):
+                    apply_stylesheet(object, theme=f'{current_dir}\\res\\themes\\dark_red.xml', extra=extra)
+                else:
+                    apply_stylesheet(object, theme=f'{current_dir}/res/themes/dark_red.xml', extra=extra)
                 self.SideBar.setStyleSheet("background-color: rgb(81, 89, 97);")
                 self.SideBar_2.setStyleSheet("background-color: rgb(81, 89, 97);")
                 self.HomeTitle.setStyleSheet("background-color: rgb(81, 89, 97);")
@@ -728,7 +791,10 @@ class Ui_MainWindow(object):
                 self.LoadingPageTitle.setStyleSheet("background-color: rgb(81, 89, 97);")
                 self.LightModeButton.setText("Light Mode")
             if style == "Light":
-                apply_stylesheet(object, theme=f'{current_dir}\\res\\themes\\light_pink.xml', extra=extra)
+                if sys.platform.startswith('win'):
+                    apply_stylesheet(object, theme=f'{current_dir}\\res\\themes\\light_pink.xml', extra=extra)
+                else:
+                    apply_stylesheet(object, theme=f'{current_dir}/res/themes/light_pink.xml', extra=extra)
                 self.SideBar.setStyleSheet("background-color: rgb(182, 182, 182);")
                 self.SideBar_2.setStyleSheet("background-color: rgb(182, 182, 182);")
                 self.HomeTitle.setStyleSheet("background-color: rgb(182, 182, 182);")
@@ -742,7 +808,10 @@ class Ui_MainWindow(object):
         def style_mode(self):
             if self.LightModeButton.text() == "Light Mode":
                 for object in objects:
-                    apply_stylesheet(object, theme=f'{current_dir}\\res\\themes\\light_pink.xml', extra=extra)
+                    if sys.platform.startswith('win'):
+                        apply_stylesheet(object, theme=f'{current_dir}\\res\\themes\\light_pink.xml', extra=extra)
+                    else:
+                        apply_stylesheet(object, theme=f'{current_dir}/res/themes/light_pink.xml', extra=extra)
                     self.CurrentTabHome.setStyleSheet("background-color: rgb(182, 182, 182);")
                     self.CurrentTabSettings.setStyleSheet("background-color: rgb(255, 0, 0);")
                     self.SideBar.setStyleSheet("background-color: rgb(182, 182, 182);")
@@ -757,7 +826,10 @@ class Ui_MainWindow(object):
                 self.LightModeButton.setText("Dark Mode")
             else:
                 for object in objects:
-                    apply_stylesheet(object, theme=f'{current_dir}\\res\\themes\\dark_red.xml', extra=extra)
+                    if sys.platform.startswith('win'):
+                        apply_stylesheet(object, theme=f'{current_dir}\\res\\themes\\dark_red.xml', extra=extra)
+                    else:
+                        apply_stylesheet(object, theme=f'{current_dir}/res/themes/dark_red.xml', extra=extra)
                     self.CurrentTabHome.setStyleSheet("background-color: rgb(81, 89, 97);")
                     self.CurrentTabSettings.setStyleSheet("background-color: rgb(255,192,203);")
                     self.SideBar.setStyleSheet("background-color: rgb(81, 89, 97);")
@@ -842,7 +914,7 @@ class Ui_MainWindow(object):
         self.SettingsTitle.setText(_translate("MainWindow", "Settings"))
         self.UseVirusTotalApiCheckBox.setText(_translate("MainWindow", "Use Virus Total api (only files under 32MB) (files will be uploaded publicly)"))
         self.VirusTotalApiKey.setPlaceholderText(_translate("MainWindow", "Enter your Virus Total api Key here"))
-        self.SaveSettingsButton.setText(_translate("MainWindow", "Safe config"))
+        self.SaveSettingsButton.setText(_translate("MainWindow", "Save Config"))
         self.UseMetaDefenderApiCheckBox.setText(_translate("MainWindow", "Use Meta Defender api to check hash"))
         self.MetaDefenderApiKey.setPlaceholderText(_translate("MainWindow", "Enter your Meta Defender api Key here"))
         self.VirusResultsTitle.setText(_translate("MainWindow", "Virus Scan Results"))

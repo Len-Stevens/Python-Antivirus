@@ -1,0 +1,5 @@
+                      PY-Antivirus [v2.6]
+                  DEV: cookie0_o, Len-Stevens 
+##############################LOGS##############################
+-ERROR ;
+Error WrongCredentialsError (401): Wrong API key: test
