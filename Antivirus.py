@@ -1,5 +1,4 @@
 # imports
-from asyncio import current_task
 from PyQt5 import QtCore, QtGui, QtWidgets
 from virustotal_python import Virustotal
 from psutil import cpu_percent
