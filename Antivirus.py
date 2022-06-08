@@ -1,7 +1,7 @@
 # imports
 from PyQt5 import QtCore, QtGui, QtWidgets
 from virustotal_python import Virustotal
-import configparser
+import configparser # removed 2 imports here 
 import webbrowser
 import requests
 import hashlib
