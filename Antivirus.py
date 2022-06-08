@@ -1,13 +1,16 @@
 # imports
+from asyncio import current_task
 from PyQt5 import QtCore, QtGui, QtWidgets
 from virustotal_python import Virustotal
-import configparser # removed 2 imports here 
+from psutil import cpu_percent
+import configparser
 import webbrowser
+import threading
 import requests
 import hashlib
+import time
 import sys
 import os
-
 
 # get current directory
 current_dir         = (os.path.dirname(__file__))
@@ -24,8 +27,8 @@ SHA256_HASHES_pack3 = (current_dir + '\\hard_signatures\\SHA256-Hashes_pack3.txt
 LOG_file            = (current_dir + '\\logs\\log.txt')
 
 # define Stuff
-VERSION             = "2.6"
-DEV                 = "cookie0_o, Len-Stevens"
+VERSION             = "2.7"
+DEV                 = "cookie0_o, Len-Stevens, MandiYang"
 
 # url´s
 Report_issues       = "https://github.com/Len-Stevens/Python-Antivirus/issues/new"
@@ -83,42 +86,19 @@ def SaveSettings(self):
     
 # remove file
 def removeFile(file):
-        try:
-            os.remove(file)
-        except Exception as e:
-            # open log file
-            with open(LOG_file, "w") as log_file:
-                log_file.write(Title_template)
-                # write error to log file
-                log_file.write("-ERROR ;\n")
-                log_file.write(str(e)+ "\n")
-                log_file.close()
+    try:
+        os.remove(file)
+        return
 
-            # file coudn't be deleted = show error message
-            msgBox = QtWidgets.QMessageBox()
-            msgBox.setIcon(QtWidgets.QMessageBox.Critical)
-            msgBox.setText("Error")
-            msgBox.setInformativeText(f"""\
-File couldn't be deleted.
-File: {file}"
-            """)
-            # remove window title bar
-            msgBox.setWindowFlags(QtCore.Qt.WindowStaysOnTopHint)
-            msgBox.setWindowFlags(QtCore.Qt.FramelessWindowHint)
-            msgBox.exec_()
-        finally:
-            # file deleted = show success message
-            msgBox = QtWidgets.QMessageBox()
-            msgBox.setIcon(QtWidgets.QMessageBox.Information)
-            msgBox.setText("Info")
-            msgBox.setInformativeText(f"""\
-File successfully deleted.
-File: {file}"
-            """)
-            # remove window title bar
-            msgBox.setWindowFlags(QtCore.Qt.WindowStaysOnTopHint)
-            msgBox.setWindowFlags(QtCore.Qt.FramelessWindowHint)
-            msgBox.exec_()
+    except Exception as e:
+        # open log file
+        with open(LOG_file, "w") as log_file:
+            log_file.write(Title_template)
+            # write error to log file
+            log_file.write("-ERROR ;\n")
+            log_file.write(str(e)+ "\n")
+            log_file.close()
+        return
 
 
 # display results
@@ -438,7 +418,7 @@ def browseFiles(MainWindow, self):
     # display file path
     self.FilePath.setText("File Path:  " + filepath)
     
-    scan(filepath, self, MainWindow)
+    threading.Thread(target=scan(filepath, self, MainWindow)).start()
 
 
 # UI (made with pyqt5)
@@ -448,17 +428,16 @@ class Ui_MainWindow(object):
         MainWindow.resize(590, 300)
         MainWindow.setMinimumSize(QtCore.QSize(590, 300))
         MainWindow.setMaximumSize(QtCore.QSize(590, 300))
-        if sys.platform == "win32":
-            icon = QtGui.QIcon()
-            icon.addPixmap(QtGui.QPixmap(":/res/ico/AntiVirus_ico.svg"), QtGui.QIcon.Normal, QtGui.QIcon.Off)
-            MainWindow.setWindowIcon(icon)
-        # OS is not windows so don´t show icon since its a .ico file
+        # Window ico is a svg file so i think it will not make problems on Linux and Windows systems
+        if sys.platform.startswith('win'):
+            MainWindow.setWindowIcon(QtGui.QIcon(current_dir + "\\res\\ico\\AntiVirus_ico.svg"))
         else:
-            pass
+            MainWindow.setWindowIcon(QtGui.QIcon(current_dir + "/res/ico/AntiVirus_ico.svg"))
         MainWindow.setStyleSheet("")
+        #//////////////////////////////////////////////////////////////////////////////////////////////////////////////
         self.SideBar = QtWidgets.QLabel(MainWindow)
         self.SideBar.setGeometry(QtCore.QRect(-10, 45, 61, 271))
-        self.SideBar.setStyleSheet("background-color: rgb(81, 89, 97);")
+        self.SideBar.setStyleSheet("background-color: rgb(78, 86, 94);")
         self.SideBar.setText("")
         self.SideBar.setObjectName("SideBar")
         self.HomeTabButton = QtWidgets.QPushButton(MainWindow)
@@ -496,6 +475,7 @@ class Ui_MainWindow(object):
         font = QtGui.QFont()
         font.setPointSize(23)
         self.HomeTitle.setFont(font)
+        self.HomeTitle.setStyleSheet("background-color: rgb(81, 89, 97);")
         self.HomeTitle.setAlignment(QtCore.Qt.AlignCenter)
         self.HomeTitle.setObjectName("HomeTitle")
         self.SelectFileButton = QtWidgets.QPushButton(self.HomeTab)
@@ -506,7 +486,7 @@ class Ui_MainWindow(object):
         self.SelectFileButton.setFlat(False)
         self.SelectFileButton.setObjectName("SelectFileButton")
         self.ReportIssueButton = QtWidgets.QPushButton(self.HomeTab)
-        self.ReportIssueButton.setGeometry(QtCore.QRect(5, 85, 121, 31))
+        self.ReportIssueButton.setGeometry(QtCore.QRect(5, 80, 121, 31))
         font = QtGui.QFont()
         font.setPointSize(11)
         self.ReportIssueButton.setFont(font)
@@ -520,13 +500,18 @@ class Ui_MainWindow(object):
         font = QtGui.QFont()
         font.setPointSize(23)
         self.SettingsTitle.setFont(font)
+        self.SettingsTitle.setStyleSheet("background-color: rgb(81, 89, 97);")
         self.SettingsTitle.setAlignment(QtCore.Qt.AlignCenter)
         self.SettingsTitle.setObjectName("SettingsTitle")
         self.UseVirusTotalApiCheckBox = QtWidgets.QCheckBox(self.SettingsTab)
-        self.UseVirusTotalApiCheckBox.setGeometry(QtCore.QRect(5, 45, 451, 17))
+        self.UseVirusTotalApiCheckBox.setGeometry(QtCore.QRect(5, 45, 531, 17))
         font = QtGui.QFont()
         font.setPointSize(10)
         self.UseVirusTotalApiCheckBox.setFont(font)
+        self.UseVirusTotalApiCheckBox.setStyleSheet("\n"
+"QCheckBox::indicator:checked {\n"
+"    image: url(:/res/Settings/check.svg);\n"
+"}")
         self.UseVirusTotalApiCheckBox.setObjectName("UseVirusTotalApiCheckBox")
         self.VirusTotalApiKey = QtWidgets.QLineEdit(self.SettingsTab)
         self.VirusTotalApiKey.setGeometry(QtCore.QRect(5, 65, 391, 20))
@@ -549,10 +534,15 @@ class Ui_MainWindow(object):
         self.SaveSettingsButton.setFlat(False)
         self.SaveSettingsButton.setObjectName("SaveSettingsButton")
         self.UseMetaDefenderApiCheckBox = QtWidgets.QCheckBox(self.SettingsTab)
-        self.UseMetaDefenderApiCheckBox.setGeometry(QtCore.QRect(5, 90, 481, 17))
+        self.UseMetaDefenderApiCheckBox.setGeometry(QtCore.QRect(5, 90, 541, 17))
         font = QtGui.QFont()
         font.setPointSize(10)
         self.UseMetaDefenderApiCheckBox.setFont(font)
+        self.UseMetaDefenderApiCheckBox.setStyleSheet("\n"
+"\n"
+"QCheckBox::indicator:checked {\n"
+"    image: url(:/res/Settings/check.svg);\n"
+"}")
         self.UseMetaDefenderApiCheckBox.setObjectName("UseMetaDefenderApiCheckBox")
         self.MetaDefenderApiKey = QtWidgets.QLineEdit(self.SettingsTab)
         self.MetaDefenderApiKey.setGeometry(QtCore.QRect(5, 110, 391, 20))
@@ -579,6 +569,7 @@ class Ui_MainWindow(object):
         font = QtGui.QFont()
         font.setPointSize(23)
         self.VirusResultsTitle.setFont(font)
+        self.VirusResultsTitle.setStyleSheet("background-color: rgb(81, 89, 97);")
         self.VirusResultsTitle.setAlignment(QtCore.Qt.AlignCenter)
         self.VirusResultsTitle.setObjectName("VirusResultsTitle")
         self.FileName = QtWidgets.QLabel(self.VirusScanResults_hidden)
@@ -703,6 +694,7 @@ class Ui_MainWindow(object):
         font = QtGui.QFont()
         font.setPointSize(23)
         self.LoadingPageTitle.setFont(font)
+        self.LoadingPageTitle.setStyleSheet("background-color: rgb(81, 89, 97);")
         self.LoadingPageTitle.setAlignment(QtCore.Qt.AlignCenter)
         self.LoadingPageTitle.setObjectName("LoadingPageTitle")
         self.label_7 = QtWidgets.QLabel(self.LoadingPage)
@@ -723,14 +715,17 @@ class Ui_MainWindow(object):
         self.version_display.setObjectName("version_display")
         self.SideBar_2 = QtWidgets.QLabel(MainWindow)
         self.SideBar_2.setGeometry(QtCore.QRect(-10, -10, 71, 51))
+        self.SideBar_2.setStyleSheet("background-color: rgb(81, 89, 97);")
         self.SideBar_2.setText("")
         self.SideBar_2.setObjectName("SideBar_2")
         self.CurrentTabHome = QtWidgets.QLabel(MainWindow)
         self.CurrentTabHome.setGeometry(QtCore.QRect(0, 50, 3, 31))
+        self.CurrentTabHome.setStyleSheet("background-color: rgb(81, 89, 97);")
         self.CurrentTabHome.setText("")
         self.CurrentTabHome.setObjectName("CurrentTabHome")
         self.CurrentTabSettings = QtWidgets.QLabel(MainWindow)
         self.CurrentTabSettings.setGeometry(QtCore.QRect(0, 90, 3, 31))
+        self.CurrentTabSettings.setStyleSheet("background-color: rgb(81, 89, 97);")
         self.CurrentTabSettings.setText("")
         self.CurrentTabSettings.setObjectName("CurrentTabSettings")
         #
@@ -792,7 +787,7 @@ class Ui_MainWindow(object):
                 if sys.platform.startswith('win'):
                     apply_stylesheet(object, theme=f'{current_dir}\\res\\themes\\light_pink.xml', extra=extra)
                 else:
-                    apply_stylesheet(object, theme=f'{current_dir}/res/themes/light_pink.xml', extra=extra)
+                    apply_stylesheet(object, theme=f'{current_dir}/res/themes/light_pink.xml', extra=extra) 
                 self.SideBar.setStyleSheet("background-color: rgb(182, 182, 182);")
                 self.SideBar_2.setStyleSheet("background-color: rgb(182, 182, 182);")
                 self.HomeTitle.setStyleSheet("background-color: rgb(182, 182, 182);")
@@ -800,6 +795,7 @@ class Ui_MainWindow(object):
                 self.VirusResultsTitle.setStyleSheet("background-color: rgb(182, 182, 182);")
                 self.LoadingPageTitle.setStyleSheet("background-color: rgb(182, 182, 182);")
                 self.LightModeButton.setText("Dark Mode")
+
 
 
         # if lightmode is enabled, apply light theme and change button text 
@@ -886,35 +882,35 @@ class Ui_MainWindow(object):
 
 
         # change tabs buttons
-        self.HomeTabButton.clicked.connect(lambda: change_tab_settings(self))
+        self.HomeTabButton.clicked.connect(lambda: threading.Thread(target=change_tab_settings(self)).start())
 
-        self.SettingsTabButton.clicked.connect(lambda: change_tab_home(self))
+        self.SettingsTabButton.clicked.connect(lambda: threading.Thread(target=change_tab_home(self)).start())
 
         # report issue button
         self.ReportIssueButton.clicked.connect(lambda: webbrowser.open_new(Report_issues))
 
         # open file dialog and scan file
-        self.SelectFileButton.clicked.connect(lambda: browseFiles(MainWindow, self))
+        self.SelectFileButton.clicked.connect(lambda: threading.Thread(target=browseFiles(MainWindow, self)).start())
 
         # save settings button
-        self.SaveSettingsButton.clicked.connect(lambda: SaveSettings(self))
+        self.SaveSettingsButton.clicked.connect(lambda: threading.Thread(target=SaveSettings(self)).start())
 
         # style mode button
-        self.LightModeButton.clicked.connect(lambda: style_mode(self))
+        self.LightModeButton.clicked.connect(lambda: threading.Thread(target=style_mode(self)).start())
 
-
+    # set the text for all objects
     def retranslateUi(self, MainWindow):
         _translate = QtCore.QCoreApplication.translate
-        MainWindow.setWindowTitle(_translate("MainWindow", f"-AntiVirus- [v{VERSION}] [dev; {DEV}]"))
         self.HomeTitle.setText(_translate("MainWindow", "Home"))
         self.SelectFileButton.setText(_translate("MainWindow", "Scan File"))
         self.ReportIssueButton.setText(_translate("MainWindow", "report issue"))
         self.SettingsTitle.setText(_translate("MainWindow", "Settings"))
         self.UseVirusTotalApiCheckBox.setText(_translate("MainWindow", "Use Virus Total api (only files under 32MB) (files will be uploaded publicly)"))
         self.VirusTotalApiKey.setPlaceholderText(_translate("MainWindow", "Enter your Virus Total api Key here"))
-        self.SaveSettingsButton.setText(_translate("MainWindow", "Save Config"))
+        self.SaveSettingsButton.setText(_translate("MainWindow", "Safe config"))
         self.UseMetaDefenderApiCheckBox.setText(_translate("MainWindow", "Use Meta Defender api to check hash"))
         self.MetaDefenderApiKey.setPlaceholderText(_translate("MainWindow", "Enter your Meta Defender api Key here"))
+        self.LightModeButton.setText(_translate("MainWindow", "Light Mode"))
         self.VirusResultsTitle.setText(_translate("MainWindow", "Virus Scan Results"))
         self.FileName.setText(_translate("MainWindow", "File Name: "))
         self.FilePath.setText(_translate("MainWindow", "File Path: "))
@@ -924,18 +920,22 @@ class Ui_MainWindow(object):
         self.ReturnToHomeTabButton.setText(_translate("MainWindow", "Return"))
         self.DeleteFileButton.setText(_translate("MainWindow", "Delete File"))
         self.label_3.setText(_translate("MainWindow", "Virus Total score"))
-        self.DetectionsText.setText(_translate("MainWindow", "0 | 0"))
+        self.DetectionsText.setText(_translate("MainWindow", "0"))
         self.label_5.setText(_translate("MainWindow", "Detections"))
         self.label_4.setText(_translate("MainWindow", "Meta Defender score"))
-        self.MetaDefenderDetectionsText.setText(_translate("MainWindow", "0 | 0"))
+        self.MetaDefenderDetectionsText.setText(_translate("MainWindow", "0"))
         self.label_6.setText(_translate("MainWindow", "Detections"))
         self.LoadingPageTitle.setText(_translate("MainWindow", "..."))
         self.label_7.setText(_translate("MainWindow", "loading..."))
+        #
         self.version_display.setText(_translate("MainWindow", f"v{VERSION}"))
+        MainWindow.setWindowTitle(_translate("MainWindow", f"-AntiVirus- [v{VERSION}] [dev; {DEV}]"))
 # import resources
 import res.res_rc
 
-if __name__ == "__main__":
+
+
+def Start_App():
     # Handle high resolution displays:
     if hasattr(QtCore.Qt, 'AA_EnableHighDpiScaling'):
         QtWidgets.QApplication.setAttribute(QtCore.Qt.AA_EnableHighDpiScaling, True)
@@ -948,3 +948,14 @@ if __name__ == "__main__":
     ui.setupUi(MainWindow)
     MainWindow.show()
     sys.exit(app.exec_())
+
+
+
+if __name__ == "__main__":
+    # We get an error message when using threads, but window won't freeze anymore when a file is scanned.
+
+    # define app thread
+    APP = threading.Thread(target=Start_App)
+    # start application and run main window
+    APP.start()
+
