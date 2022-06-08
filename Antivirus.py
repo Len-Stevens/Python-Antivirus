@@ -1,6 +1,4 @@
 # imports
-from fileinput import filename
-from re import template
 from PyQt5 import QtCore, QtGui, QtWidgets
 from virustotal_python import Virustotal
 import configparser
