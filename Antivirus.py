@@ -1,7 +1,7 @@
 # imports
 from PyQt5 import QtCore, QtGui, QtWidgets
 from virustotal_python import Virustotal
-from psutil import cpu_percent
+from zipfile import ZipFile
 import configparser
 import webbrowser
 import threading
@@ -14,19 +14,17 @@ import os
 # get current directory
 current_dir         = (os.path.dirname(__file__))
 
-# settings.ini file path
-settings_file_path  = (current_dir + '\\settings\\settings.ini')
+# Hashes path
+HASH_Files          = (current_dir + '/hard_signatures/unpacked_SHA256-Hashes_packs')
 
-# get files with Virus hashes inside
-SHA256_HASHES_pack1 = (current_dir + '\\hard_signatures\\SHA256-Hashes_pack1.txt')
-SHA256_HASHES_pack2 = (current_dir + '\\hard_signatures\\SHA256-Hashes_pack2.txt')
-SHA256_HASHES_pack3 = (current_dir + '\\hard_signatures\\SHA256-Hashes_pack3.txt')
+# settings.ini file path
+settings_file_path  = (current_dir + '/settings/settings.ini')
 
 # get log file
-LOG_file            = (current_dir + '\\logs\\log.txt')
+LOG_file            = (current_dir + '/logs/log.txt')
 
 # define Stuff
-VERSION             = "2.7"
+VERSION             = "2.8"
 DEV                 = "cookie0_o, Len-Stevens, MandiYang"
 
 # url´s
@@ -45,7 +43,6 @@ config = configparser.ConfigParser()
 config.read(settings_file_path)
 
 
-
 # clear log file
 with open(LOG_file, 'r+') as f:
     f.truncate(0)
@@ -56,6 +53,54 @@ with open(LOG_file, "w") as log_file:
     log_file
     # write log file template
     log_file.write(Title_template)
+
+
+
+
+def Get_Hashes(self, MainWindow):
+    # check if virus hashes are unpacked and in dir ; hard_signatures/unpacked_SHA256-Hashes_packs else unpack them
+    if os.path.exists(HASH_Files + '/SHA256-Hashes_pack1.txt'):
+        # do nothing since hashes are already unpacked
+        pass
+
+    else:
+        try:
+            # zip file path
+            ZIP_file        = (current_dir + '/hard_signatures/SHA256-Hashes_packs.zip')
+
+            # unpack hashes from .zip file 
+            with ZipFile(ZIP_file, 'r') as zip:
+                # Extract all the contents of zip file in different directory
+                zip.extractall(current_dir + '/hard_signatures/unpacked_SHA256-Hashes_packs')
+            zip.close()
+            # delete zip file
+            os.remove(ZIP_file)
+
+        except Exception as e:
+            # error when getting zip file or unpacking it
+            # open log file
+            with open(LOG_file, "w") as log_file:
+                log_file.write(Title_template)
+                # write error to log file
+                log_file.write("-ERROR ;\n")
+                log_file.write(str(e)+ "\n")
+                log_file.close()
+            # show error message
+            msgBox = QtWidgets.QMessageBox()
+            msgBox.setIcon(QtWidgets.QMessageBox.Critical)
+            msgBox.setText("Error")
+            msgBox.setInformativeText(f"""\
+Error when unpacking hashes or getting zip file.
+{ZIP_file}
+App will now close.
+            """)
+            # remove window title bar
+            msgBox.setWindowFlags(QtCore.Qt.WindowStaysOnTopHint)
+            msgBox.setWindowFlags(QtCore.Qt.FramelessWindowHint)
+            msgBox.exec_()
+            exit()
+    return
+   
 
 
 # save settings to settings/settings.ini
@@ -109,8 +154,7 @@ def displayResults_VIRUS(self, file):
     else:
         # hide Virus total results since it is not needed
         self.VirusTotalWidget.hide()
-    # check if meta defender check if on and file is under 120mb
-    if self.UseMetaDefenderApiCheckBox.isChecked() and os.path.getsize(file) < 120000000:
+    if self.UseMetaDefenderApiCheckBox.isChecked():
         self.MetaDefenderWidget.show()
     else:
         # hide meta defender results since it is not needed
@@ -131,8 +175,7 @@ def displayResults_CLEAN(self, file):
     else:
         # hide Virus total results since it is not needed
         self.VirusTotalWidget.hide()
-    # check if meta defender check if on and file is under 120mb
-    if self.UseMetaDefenderApiCheckBox.isChecked() and os.path.getsize(file) < 120000000:
+    if self.UseMetaDefenderApiCheckBox.isChecked():
         self.MetaDefenderWidget.show()
     else:
         # hide meta defender results since it is not needed
@@ -147,56 +190,52 @@ def displayResults_CLEAN(self, file):
 
 
 def scan(file, self, MainWindow):
+    # default virus found to false
+    virus_found = False
+
+    # get unpacked files with Virus hashes inside
+    SHA256_HASHES_pack1 = (HASH_Files + '/SHA256-Hashes_pack1.txt')
+    SHA256_HASHES_pack2 = (HASH_Files + '/SHA256-Hashes_pack2.txt')
+    SHA256_HASHES_pack3 = (HASH_Files + '/SHA256-Hashes_pack3.txt')
+
     try:
-        # default virus found to false
-        virus_found = False
-
-
         # open file and get hash
-        with open(file,"rb") as f:
-            bytes = f.read()
-            readable_hash = hashlib.sha256(bytes).hexdigest();
-
+        with open(file,"rb") as target_file:
+            bytes = target_file.read()
+            readable_hash = hashlib.sha256(bytes).hexdigest()
         # display hash
         self.FileHash.setText("File Hash:  " + readable_hash)
+        # close file
+        target_file.close()
 
-        # check if from the selected is = to a hash in the virus hash list
 
         # SHA256 HASHES check + pack 1
-        with open(SHA256_HASHES_pack1,'r') as f:
-            lines = [line.rstrip() for line in f]
-            for line in lines:
+        with open(SHA256_HASHES_pack1,'r') as pack1:
+            for line in pack1:
                 if str(readable_hash) == str(line.split(";")[0]):
                     virus_found = True
-                    f.close()
-        f.close()
-        # check if virus is found else pass
-        if virus_found == True:
-            pass
-        else:
-            pass
-        if virus_found == False:
+        pack1.close()
+
+
+        if not virus_found == True:
             # SHA256 HASHES check + pack 2
-            with open(SHA256_HASHES_pack2,'r') as f:
-                lines = [line.rstrip() for line in f]
-                for line in lines:
+            with open(SHA256_HASHES_pack2,'r') as pack2:
+                for line in pack2:
                     if str(readable_hash) == str(line.split(";")[0]):
                         virus_found = True
-                        f.close()
-            f.close()
-        else:
-            pass
-        if virus_found == False:
+            pack2.close()
+
+
+        if not virus_found == True:
             # SHA256 HASHES check + pack 3
-            with open(SHA256_HASHES_pack3,'r') as f:
-                lines = [line.rstrip() for line in f]
-                for line in lines:
+            with open(SHA256_HASHES_pack3,'r') as pack3:
+                for line in pack3:
                     if str(readable_hash) == str(line.split(";")[0]):
                         virus_found = True
-                        f.close()
-            f.close()
-        else:
-            pass
+            pack3.close()
+
+        
+
 
         try:
             # check if Virus total api is checked and file is under 32mb then scan the file with Virus total
@@ -324,6 +363,7 @@ Please enter a valid Meta Defender API key.
                         else:
                             displayResults_VIRUS(self, file)
 
+
             else:
                 # goto hidden results tab
                 self.Tabs.setCurrentIndex(2)
@@ -331,6 +371,7 @@ Please enter a valid Meta Defender API key.
                     displayResults_VIRUS(self, file)
                 else:
                     displayResults_CLEAN(self, file)
+
         # show error when Meta Defender api was not able to scan the file
         except Exception as e:
             # set results to ERROR
@@ -357,17 +398,7 @@ Cant scan file with Meta Defender.
             msgBox.setWindowFlags(QtCore.Qt.FramelessWindowHint)
             msgBox.exec_()
 
-        
-        finally:
-            # goto hidden results tab
-            self.Tabs.setCurrentIndex(2)
-
-            # delete file button
-            self.DeleteFileButton.clicked.connect(lambda: removeFile(file))
-            # return button
-            self.ReturnToHomeTabButton.clicked.connect(lambda: self.Tabs.setCurrentIndex(0))
-
-
+    # scan error
     except Exception as e:
         # change tab to home tab
         self.Tabs.setCurrentIndex(0)
@@ -390,8 +421,9 @@ No file selected or \nProgram has no permission to access file.\nOr error while 
         msgBox.setWindowFlags(QtCore.Qt.WindowStaysOnTopHint)
         msgBox.setWindowFlags(QtCore.Qt.FramelessWindowHint)
         msgBox.exec_()
-    finally:
-        return
+
+
+
 
 
 # BROWSE FILE
@@ -420,6 +452,7 @@ def browseFiles(MainWindow, self):
     threading.Thread(target=scan(filepath, self, MainWindow)).start()
 
 
+
 # UI (made with pyqt5)
 class Ui_MainWindow(object):
     def setupUi(self, MainWindow):
@@ -428,10 +461,8 @@ class Ui_MainWindow(object):
         MainWindow.setMinimumSize(QtCore.QSize(590, 300))
         MainWindow.setMaximumSize(QtCore.QSize(590, 300))
         # Window ico is a svg file so i think it will not make problems on Linux and Windows systems
-        if sys.platform.startswith('win'):
-            MainWindow.setWindowIcon(QtGui.QIcon(current_dir + "\\res\\ico\\AntiVirus_ico.svg"))
-        else:
-            MainWindow.setWindowIcon(QtGui.QIcon(current_dir + "/res/ico/AntiVirus_ico.svg"))
+        MainWindow.setWindowIcon(QtGui.QIcon(current_dir + "/res/ico/AntiVirus_ico.svg"))
+
         MainWindow.setStyleSheet("")
         #//////////////////////////////////////////////////////////////////////////////////////////////////////////////
         self.SideBar = QtWidgets.QLabel(MainWindow)
@@ -745,55 +776,29 @@ class Ui_MainWindow(object):
         extra = {
     
             # Density Scale
-            'density_scale': '-2',
+            'density_scale': '-1',
         }
-        objects = [
-            # buttons
-            self.SelectFileButton,
-            self.ReportIssueButton,
-            self.LightModeButton,
-            self.SaveSettingsButton,
-            self.LightModeButton,
-            self.ReturnToHomeTabButton,
-            self.DeleteFileButton,
-            # line edits
-            self.MetaDefenderApiKey,
-            self.VirusTotalApiKey,
-            # check boxes
-            self.UseVirusTotalApiCheckBox,
-            self.UseMetaDefenderApiCheckBox,
-            # background
-            MainWindow,
-            # labels
-        ]
 
         # apply stylesheet in settings
 
-        for object in objects:
-            if style == "Dark":
-                if sys.platform.startswith('win'):
-                    apply_stylesheet(object, theme=f'{current_dir}\\res\\themes\\dark_red.xml', extra=extra)
-                else:
-                    apply_stylesheet(object, theme=f'{current_dir}/res/themes/dark_red.xml', extra=extra)
-                self.SideBar.setStyleSheet("background-color: rgb(81, 89, 97);")
-                self.SideBar_2.setStyleSheet("background-color: rgb(81, 89, 97);")
-                self.HomeTitle.setStyleSheet("background-color: rgb(81, 89, 97);")
-                self.SettingsTitle.setStyleSheet("background-color: rgb(81, 89, 97);")
-                self.VirusResultsTitle.setStyleSheet("background-color: rgb(81, 89, 97);")
-                self.LoadingPageTitle.setStyleSheet("background-color: rgb(81, 89, 97);")
-                self.LightModeButton.setText("Light Mode")
-            if style == "Light":
-                if sys.platform.startswith('win'):
-                    apply_stylesheet(object, theme=f'{current_dir}\\res\\themes\\light_pink.xml', extra=extra)
-                else:
-                    apply_stylesheet(object, theme=f'{current_dir}/res/themes/light_pink.xml', extra=extra) 
-                self.SideBar.setStyleSheet("background-color: rgb(182, 182, 182);")
-                self.SideBar_2.setStyleSheet("background-color: rgb(182, 182, 182);")
-                self.HomeTitle.setStyleSheet("background-color: rgb(182, 182, 182);")
-                self.SettingsTitle.setStyleSheet("background-color: rgb(182, 182, 182);")
-                self.VirusResultsTitle.setStyleSheet("background-color: rgb(182, 182, 182);")
-                self.LoadingPageTitle.setStyleSheet("background-color: rgb(182, 182, 182);")
-                self.LightModeButton.setText("Dark Mode")
+        if style == "Dark":
+            apply_stylesheet(MainWindow, theme=f'{current_dir}/res/themes/dark_red.xml', extra=extra)
+            self.SideBar.setStyleSheet("background-color: rgb(81, 89, 97);")
+            self.SideBar_2.setStyleSheet("background-color: rgb(81, 89, 97);")
+            self.HomeTitle.setStyleSheet("background-color: rgb(81, 89, 97);")
+            self.SettingsTitle.setStyleSheet("background-color: rgb(81, 89, 97);")
+            self.VirusResultsTitle.setStyleSheet("background-color: rgb(81, 89, 97);")
+            self.LoadingPageTitle.setStyleSheet("background-color: rgb(81, 89, 97);")
+            self.LightModeButton.setText("Light Mode")
+        if style == "Light":
+            apply_stylesheet(MainWindow, theme=f'{current_dir}/res/themes/light_pink.xml', extra=extra) 
+            self.SideBar.setStyleSheet("background-color: rgb(182, 182, 182);")
+            self.SideBar_2.setStyleSheet("background-color: rgb(182, 182, 182);")
+            self.HomeTitle.setStyleSheet("background-color: rgb(182, 182, 182);")
+            self.SettingsTitle.setStyleSheet("background-color: rgb(182, 182, 182);")
+            self.VirusResultsTitle.setStyleSheet("background-color: rgb(182, 182, 182);")
+            self.LoadingPageTitle.setStyleSheet("background-color: rgb(182, 182, 182);")
+            self.LightModeButton.setText("Dark Mode")
 
 
 
@@ -801,10 +806,8 @@ class Ui_MainWindow(object):
         def style_mode(self):
             if self.LightModeButton.text() == "Light Mode":
                 for object in objects:
-                    if sys.platform.startswith('win'):
-                        apply_stylesheet(object, theme=f'{current_dir}\\res\\themes\\light_pink.xml', extra=extra)
-                    else:
-                        apply_stylesheet(object, theme=f'{current_dir}/res/themes/light_pink.xml', extra=extra)
+                    apply_stylesheet(object, theme=f'{current_dir}/res/themes/light_pink.xml', extra=extra)
+
                     self.CurrentTabHome.setStyleSheet("background-color: rgb(182, 182, 182);")
                     self.CurrentTabSettings.setStyleSheet("background-color: rgb(255, 0, 0);")
                     self.SideBar.setStyleSheet("background-color: rgb(182, 182, 182);")
@@ -819,10 +822,8 @@ class Ui_MainWindow(object):
                 self.LightModeButton.setText("Dark Mode")
             else:
                 for object in objects:
-                    if sys.platform.startswith('win'):
-                        apply_stylesheet(object, theme=f'{current_dir}\\res\\themes\\dark_red.xml', extra=extra)
-                    else:
-                        apply_stylesheet(object, theme=f'{current_dir}/res/themes/dark_red.xml', extra=extra)
+                    apply_stylesheet(object, theme=f'{current_dir}/res/themes/dark_red.xml', extra=extra)
+
                     self.CurrentTabHome.setStyleSheet("background-color: rgb(81, 89, 97);")
                     self.CurrentTabSettings.setStyleSheet("background-color: rgb(255,192,203);")
                     self.SideBar.setStyleSheet("background-color: rgb(81, 89, 97);")
@@ -896,6 +897,10 @@ class Ui_MainWindow(object):
 
         # style mode button
         self.LightModeButton.clicked.connect(lambda: threading.Thread(target=style_mode(self)).start())
+
+        
+        # unpack virus hashes
+        threading.Thread(target=Get_Hashes(self, MainWindow)).start()
 
     # set the text for all objects
     def retranslateUi(self, MainWindow):
