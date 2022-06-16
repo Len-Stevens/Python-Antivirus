@@ -4,9 +4,7 @@ A simple antivirus coded in python capable of scanning selected files and deleti
 Thank You! :)
 
 ## NOTE:
-when you install qt-material pls go to;
-`you_Python_dir\Lib\site-packages\qt_material`
-and replace `material.css.template` with this [File!](https://anonfiles.com/b4R2X6g1y0/material.css_template) (else Gui will be broken!)
+When you click "Delete File" the file is GONE so you cant restore it!
 
 # Gui
 ## Dark mode
