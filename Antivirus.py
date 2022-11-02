@@ -14,7 +14,7 @@ import os
 current_dir         = (os.path.dirname(__file__))
 
 # Hashes path
-HASH_Files          = (current_dir + '/hard_signatures/')
+HASH_Files          = (current_dir + '/hard_signatures/unpacked_SHA256-Hashes_packs/')
 
 # settings.ini file path
 settings_file_path  = (current_dir + '/settings/settings.ini')
