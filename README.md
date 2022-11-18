@@ -3,10 +3,10 @@ A simple antivirus coded in python capable of scanning selected files and deleti
 
 Thank You! :)
 
-## NOTE:
-when you install qt-material pls go to;
-`you_Python_dir\Lib\site-packages\qt_material`
-and replace `material.css.template` with this [File!](https://anonfiles.com/b4R2X6g1y0/material.css_template) (else Gui will be broken!)
+# Running the program
+ - Install requirements (navigate to project folder and type this in console: `py -m pip install -U -r requirements.txt`)
+ - Navigate to `you_Python_dir\Lib\site-packages\qt_material` and replace `material.css.template` with this [file](https://anonfiles.com/b4R2X6g1y0/material.css_template)
+ - Type `py Antivirus.py` to run the main script.
 
 # Gui
 ## Dark mode
