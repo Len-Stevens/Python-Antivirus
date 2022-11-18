@@ -3,7 +3,7 @@ A simple antivirus coded in python capable of scanning selected files and deleti
 
 Thank You! :)
 
-## how to install:
+## How to Install:
 Install requirements `python -m pip install -U -r requirements.txt`
 
 ## NOTE:
