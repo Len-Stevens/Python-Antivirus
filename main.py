@@ -1,62 +1,17 @@
 ### IMPORTS ###
-from virustotal_python import Virustotal
+import virustotal_python
 import configparser
 import webbrowser
 import threading
 import requests
 import hashlib
+import os.path
+import time
 import sys
 import os
 
 # App Values like paths, etc.
-class Values():
-
-    # current directory
-    current_dir          = os.path.dirname(os.path.abspath(__file__))
-
-    # app version
-    app_version          = "3.0"
-
-    # app log path
-    app_log_path         = current_dir + "/logs/app_log.txt"
-
-    # error log path
-    error_log_path       = current_dir + "/logs/error_log.txt"
-
-    # app ico path
-    app_ico_path         = current_dir + "/res/ico/AntiVirus_ico.svg"
-
-    # app settings path
-    app_settings_path    = current_dir + "/settings/s.ini" 
-
-    # app theme paths
-    theme_path = current_dir + "/res/themes/"
-
-    # app github links
-    github_repo_link     = "https://github.com/cookie0o/Python-Antivirus-v2"
-    github_issues_link   = "https://github.com/cookie0o/Python-Antivirus-v2/issues/new"
-
-    # developers
-    developers = {
-        "cookie0_o"
-    }
-    
-    # style extra values
-    extra = {
-        # Density Scale
-        'density_scale': '-1',
-    }
-
-    # known virus hashes paths
-    MD5_HASHES_pack1     = current_dir + "/hashes/MD5_HASHES_pack1.txt"
-    MD5_HASHES_pack2     = current_dir + "/hashes/MD5_HASHES_pack2.txt"
-    MD5_HASHES_pack3     = current_dir + "/hashes/MD5_HASHES_pack3.txt"
-
-    # Developers
-    def app_developers():
-        # join all developers into a string and return it
-        devs = ", ".join(Values.developers)
-        return devs
+from misc.values import Values
 
 # Side functions like get_path, log, etc.
 class Side_Functions():
@@ -102,7 +57,7 @@ class Side_Functions():
     # get user file to scan
     def browse_file(self):
         # change tab to loading tab
-        Side_Functions.change_tab(self, "loading", "getting file to scan")
+        Side_Functions.change_tab(self, "loading", "The file is being scanned \n [NOTE] Scanning with the VirusTotal API may not work/take longer than usual")
         # get file path
         filepath_raw, filename_raw = os.path.split(str(QtWidgets.QFileDialog.getOpenFileName(MainWindow,
                                                                         "Select File",
@@ -131,7 +86,7 @@ class Side_Functions():
             pack_1_url = "https://virusshare.com/hashfiles/VirusShare_00000.md5"
             pack_2_url = "https://virusshare.com/hashfiles/VirusShare_00001.md5"
             pack_3_url = "https://virusshare.com/hashfiles/VirusShare_00002.md5"
-            # download the hashes and save them
+            # download the hashes
             pack_1 = requests.get(pack_1_url)
             pack_2 = requests.get(pack_2_url)
             pack_3 = requests.get(pack_3_url)
@@ -453,21 +408,38 @@ class File_Scan():
                         return
                     else:
                         pass
+
+                    ## UPLOAD FILE AND GET ID
                     # Create dictionary containing the file to send for multipart encoding upload
-                    files = {"file": (os.path.basename(file_name), open(os.path.abspath(file_path), "rb"))}
-                    # define the api key
-                    vtotal = Virustotal(API_KEY=VT_API_KEY)
-                    # send the file to the api
-                    resp = vtotal.request("files", files=files, method="POST")
-                    # get the response
-                    id = resp.data["id"]
-                    headers = {"x-Apikey": f"{VT_API_KEY}"}
-                    analysis = requests.get(f"https://www.virustotal.com/api/v3/analyses/{id}", headers=headers)
-                    analysis_json = analysis.json()
+                    files = {"file": (os.path.basename(file_path), open(os.path.abspath(file_path), "rb"))}
+
+                    with virustotal_python.Virustotal(VT_API_KEY) as vtotal:
+                        resp = vtotal.request("files", files=files, method="POST")
+                        id = str(resp.data["id"])
+
+                    ## SEARCH FILE ID AND GET RESULTS
+                    def scan(VT_API_KEY, id):
+                        url = f"https://www.virustotal.com/api/v3/analyses/{id}"
+                        headers = {
+                            "accept": "application/json",
+                            "X-Apikey": VT_API_KEY
+                        }
+                        analysis = requests.get(url, headers=headers)
+                        analysis_json = analysis.json()
+                        # get status
+                        status = analysis_json["data"]["attributes"]["status"]
+                        # return results
+                        return analysis_json, status
+                    # waiting for the scan to finish
+                    while scan(VT_API_KEY, id)[1] == "queued":
+                        time.sleep(2)
+                    else:
+                        pass
+                    
+                    analysis_json = scan(VT_API_KEY, id)[0]
+
                     detections = analysis_json["data"]["attributes"]["stats"]["malicious"]
                     not_detections = analysis_json["data"]["attributes"]["stats"]["undetected"]
-
-                    
                     # if detections more than half of not detections print red
                     if detections > not_detections:
                         self.DetectionsText.setStyleSheet("color: red")
