@@ -2,3 +2,4 @@ PyQt5
 requests
 configparser
 virustotal_python
+qt_material
