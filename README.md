@@ -1,5 +1,5 @@
 # **Python-Antivirus-v3.0**
-A simple antivirus coded in python capable of scanning selected files and deleting files that it detects as infected. This antivirus uses a large list of HA256 malware hashes my long term goal is to create a fully functioning antivirus.
+A simple antivirus coded in python capable of scanning selected files and deleting files that it detects as infected. This antivirus uses a large list of MD5 malware hashes my long term goal is to create a fully functioning antivirus.
 
 Thank You! :)
 
